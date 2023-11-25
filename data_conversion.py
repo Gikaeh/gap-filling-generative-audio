@@ -22,9 +22,37 @@ class DataConversion:
             self.y.append(yt)
             self.sr.append(srt)
 
-    def print_sr(self):
+    def display_data(self):
+        for x in range(len(self.data)):
+            print(self.data[x])
+
+    def display_sr(self):
         for x in range(len(self.data)):
             print(self.sr[x])
+
+    def display_y(self):
+        for x in range(len(self.data)):
+            print(self.y[x])
+
+    def display_raw_audio(self, num):
+        pd.Series(self.y[num]).plot(figsize=(10,5), lw=1, title=f'Raw Audio for {self.data[num]}')
+        plt.show()
+
+    # def data_to_stft(self):
+    #     S_db = []
+
+    #     print('Converting to Spectrogram:')
+    #     for x in tqdm(range(len(self.data))):
+    #         D = lb.stft(self.y[x])
+    #         S_db.append(lb.amplitude_to_db(np.abs(D), ref=np.max))
+
+    #     return S_db
+    
+    # def display_stft(self, stft_list, num):
+    #     fig, ax = plt.subplots(figsize=(10,5))
+    #     img = display.specshow(stft_list[num], x_axis='time', y_axis='log', ax=ax)
+    #     ax.set_title(f'File {self.data[num]} Spectrogram', fontsize=20)
+    #     plt.show()
 
     def data_to_mel(self):
         S_db_mel = []
@@ -43,25 +71,10 @@ class DataConversion:
         plt.show()
 
 
-test1 = DataConversion('./dataset/*.mp3')
-test1.load_data()
-spect_list = test1.data_to_mel()
-test1.display_mel(spect_list, 20)
-
-
-# pd.Series(y).plot(figsize=(10,5), lw=1, title='Raw Audio Example')
-# plt.show()
-
-# # D = lb.stft(y)
-# # S_db = lb.amplitude_to_db(np.abs(D), ref=np.max)
-
-# # fig, ax = plt.subplots(figsize=(10,5))
-# # img = display.specshow(S_db, x_axis='time', y_axis='log', ax=ax)
-# # plt.show()
-
-# S = lb.feature.melspectrogram(y=y, sr=sr, n_mels=128)
-# S_db_mel = lb.amplitude_to_db(S, ref=np.max)
-
-# fig, ax = plt.subplots(figsize=(10,5))
-# img = display.specshow(S_db_mel, x_axis='time', y_axis='log', ax=ax)
-# plt.show()
+# test1 = DataConversion('./dataset/*.mp3')
+# test1.load_data()
+# test1.display_raw_audio(20)
+# spect_list = test1.data_to_stft()
+# test1.display_stft(spect_list, 20)
+# spect_list_mel = test1.data_to_mel()
+# test1.display_mel(spect_list_mel, 20)
