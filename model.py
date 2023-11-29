@@ -28,7 +28,7 @@ class WaveNetBlock(nn.Module):
         # and the skip connection for aggregation in the main WaveNet model
         return residual + x[:, :, :-1], skip
 
-class WaveNet(nn.module):
+class WaveNet(nn.Module):
     def __init__(self, in_channels, residual_channels, skip_channels, num_blocks):
         super(WaveNet, self).__init__()
 
