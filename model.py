@@ -15,21 +15,21 @@ class WaveNetBlock(nn.Module):
         self.skipConn_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1)
 
     def forward(self, x):
+        print(self.dilated_conv(x).shape)
         # compute dilated convolution
         dilation = torch.tanh(self.dilated_conv(x))
         gated_output = torch.sigmoid(self.dilated_conv(x))
         output_final = dilation * gated_output
-
         # compute residual and skip convolution
         residual = self.residual_conv(output_final)
         skip = self.skipConn_conv(output_final)
 
         # Return the sum of the input and residual for the next block,
         # and the skip connection for aggregation in the main WaveNet model
-        return residual + x[:, :, :-1], skip
+        return residual + x[:, :, :-residual.shape[2]], skip
 
 class WaveNet(nn.Module):
-    def __init__(self, in_channels, residual_channels, skip_channels, num_blocks):
+    def __init__(self, in_channels, residual_channels, skip_channels, num_blocks, how_much):
         super(WaveNet, self).__init__()
 
         # input layer
@@ -59,7 +59,7 @@ class WaveNet(nn.Module):
 
         # Two final convolutional layers
         x = torch.relu(self.end_conv1(x))
-        x = self.end_conv2(x)
+        x = self.end_conv2(x)[:how_much]
 
         return x
 

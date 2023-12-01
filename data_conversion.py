@@ -8,7 +8,7 @@ from librosa import display
 from tqdm import tqdm
 import random
 
-hop = 450
+hop = 0 #450
 either_side = 10
 fill_in = 2
 move_between = 2
@@ -65,7 +65,8 @@ class DataConversion:
 
         print('Converting to Mel-Spectrogram:')
         for x in tqdm(range(len(self.data))):
-            S = lb.feature.melspectrogram(y=self.y[x], sr=self.sr[x], n_mels=128, hop_length = hop)
+            if hop > 0: S = lb.feature.melspectrogram(y=self.y[x], sr=self.sr[x], n_mels=128, hop_length = hop)
+            else: S = self.y[x]
             S_db_mel.append(lb.amplitude_to_db(S, ref=np.max))
         for x in range(5):
             print(self.y[x].shape)
@@ -74,23 +75,27 @@ class DataConversion:
         return S_db_mel
 
     def make_inputs_outputs(self, S_db_mel):
-        inputs = []
+        inputs_before = []
+        inputs_after = []
         outputs = []
         random.shuffle(S_db_mel)
         print("Splitting files to generate test cases:")
         for x in tqdm(range(len(S_db_mel))):
-            fps = int(self.sr[x] / hop)
+            fps = int(self.sr[x] / hop) if hop > 0 else self.sr[x]
             mel = S_db_mel[x]
             melt = np.transpose(mel)
             for i in range(int(melt.shape[0]/(move_between * fps))):
                 first = melt[i * move_between * fps : (i * move_between + either_side) * fps]
                 middle = melt[(i * move_between + either_side) * fps : (i * move_between + either_side + fill_in) * fps]
                 end = melt[(i * move_between + either_side + fill_in) * fps : (i * move_between + either_side * 2 + fill_in) * fps]
-                inputs.append(np.concatenate((first, np.zeros(middle.shape), end)))
+                inputs_before.append(first)
+                inputs_after.append(end)
                 outputs.append(middle)
-        print(inputs[0].shape)
-        print(outputs[0].shape)
-        return (inputs, outputs)
+        for i in range(5):
+            print(inputs_before[i].shape)
+            print(inputs_after[i].shape)
+            print(outputs[i].shape)
+        return (inputs_before, inputs_after, outputs)
     
     def display_mel(self, mel_list, num):
         fig, ax = plt.subplots(figsize=(10,5))
