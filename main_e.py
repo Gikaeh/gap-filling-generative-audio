@@ -61,10 +61,10 @@ device = (
     if torch.backends.mps.is_available()
     else "cpu"
 )
-model = WaveNet(1, 256, data_conversion.n_mels, 256, 6, data_conversion.fill_in * data_conversion.global_sr)
+model = WaveNet(1, 32, data_conversion.n_mels, 32, 6, data_conversion.fill_in * data_conversion.global_sr)
 model = model.to(device)
 lr = 0.0002
-batch_size = 1
+batch_size = 8
 weight_decay = 0
 epochs = 10
 loss_fn = torch.nn.MSELoss()
