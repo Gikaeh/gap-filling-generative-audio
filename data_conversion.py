@@ -7,7 +7,7 @@ import librosa as lb
 from librosa import display
 from tqdm import tqdm
 import random
-import torch
+import copy
 
 hop = 128
 either_side = 10
@@ -22,6 +22,8 @@ class DataConversion:
         self.data = glob(file_dir)
         self.y = []
         self.sr = []
+        self.mel_full = []
+        self.mel_cut = []
 
     def load_data(self):
         print('Loading Data:')
@@ -65,86 +67,85 @@ class DataConversion:
     #     plt.show()
 
     def data_to_mel(self):
-        S_db_mel = []
-
         print('Converting to Mel-Spectrogram:')
-        for x in tqdm(range(len(self.data))):
-            S = lb.feature.melspectrogram(y=self.y[x], sr=global_sr, n_mels=n_mels, hop_length = hop)
-            S_db_mel.append(lb.amplitude_to_db(S, ref=np.max))
-        for x in range(5):
-            print(self.y[x].shape)
-            print(S_db_mel[x].shape)
-        return S_db_mel
 
-    def process_and_save_data(self):
-        size = len(self.y)
-        for start, end, name in [(0, 0.2, "trainbatch1"),
-                                 (0.2, 0.4, "trainbatch2"),
-                                 (0.4, 0.6, "trainbatch3"),
-                                 (0.6, 0.8, "trainbatch4"),
-                                 (0.8, 0.9, "validation"),
-                                 (0.9, 1.0, "test")]:
-            data = []
-            for x in tqdm(range(int(start * size), int(end * size))):
-                for i in range((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * move_between)):
-                    first = self.y[x][i * move_between * global_sr : (i * move_between + either_side) * global_sr]
-                    middle = self.y[x][(i * move_between + either_side) * global_sr : (i * move_between + either_side + fill_in) * global_sr]
-                    end = self.y[x][(i * move_between + either_side + fill_in) * global_sr : (i * move_between + either_side * 2 + fill_in) * global_sr]
-                    if first.size == 0 or middle.size == 0 or end.size == 0:
-                        print(len(self.y[x]), i * move_between * global_sr, (i * move_between + either_side * 2 + fill_in) * global_sr)
-                        print(melt.shape, i * move_between * fps,(i * move_between + either_side * 2 + fill_in) * fps)
-                        print(len(first), len(middle), len(end), len(first_mel), len(middle_mel), len(end_mel))
-                        raise AssertionError
-                    first_mel = np.transpose(lb.amplitude_to_db(lb.feature.melspectrogram(y=first, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max))
-                    middle_mel = np.transpose(lb.amplitude_to_db(lb.feature.melspectrogram(y=middle, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max))
-                    end_mel = np.transpose(lb.amplitude_to_db(lb.feature.melspectrogram(y=end, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max))
-                    data.append([first, middle, end, first_mel, middle_mel, end_mel])
-            print(len(data))
-            torch.save(data[:int(0.1 * len(data))], name + ".pt")
-                    
-    def process_and_save_data(self, S_db_mel):
+        for x in tqdm(range(len(self.data))):
+            # Extract a 20-second segment
+            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
+            segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
+
+            # Generate mel-spectrogram for the complete 20 seconds
+            mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
+            self.mel_full.append(mel_spect)
+
+            # Save a 3-second cut from the middle
+            cut_start = int((mel_spect.shape[1] / 2) - 43.1 * 2)
+            cut_end = int(cut_start + 43.1 * 4)
+            
+            # Set the 3 seconds in the original mel-spectrogram to zero to create the input
+            mel_cut = copy.deepcopy(mel_spect)
+            mel_cut[:, cut_start:cut_end] = 0
+            self.mel_cut.append(mel_cut)
+
+        return self.mel_cut, self.mel_full
+
+    # def data_to_mel(self, device):
+    #     S_db_mel = []
+
+    #     print('Converting to Mel-Spectrogram:')
+
+    #     for x in tqdm(range(len(self.data))):
+    #         if hop > 0: S = lb.feature.melspectrogram(y=self.y[x], sr=self.sr[x], n_mels=128, hop_length = hop)
+    #         else: S = self.y[x]
+    #         S_db_mel.append(lb.amplitude_to_db(S, ref=np.max))
+    #     for x in range(5):
+    #         print(self.y[x].shape)
+    #         print(self.sr[x])
+    #         print(S_db_mel[x].shape)
+    #     return S_db_mel
+
+    def make_inputs_outputs(self, S_db_mel):
+        inputs_before = []
+        inputs_after = []
+        outputs = []
         random.shuffle(S_db_mel)
-        size = len(S_db_mel)
         print("Splitting files to generate test cases:")
-        for start, end, name in [(0, 0.2, "trainbatch1"),
-                                 (0.2, 0.4, "trainbatch2"),
-                                 (0.4, 0.6, "trainbatch3"),
-                                 (0.6, 0.8, "trainbatch4"),
-                                 (0.8, 0.9, "validation"),
-                                 (0.9, 1.0, "test")]:
-            data = []
-            print("Saving " + name + "...")
-            for x in tqdm(range(int(start * size), int(end * size))):
-                fps = int(global_sr / hop)
-                mel = S_db_mel[x]
-                melt = np.transpose(mel)
-                for i in range((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * fill_in)):
-                    first_mel = melt[i * move_between * fps : (i * move_between + either_side) * fps]
-                    middle_mel = melt[(i * move_between + either_side) * fps : (i * move_between + either_side + fill_in) * fps]
-                    end_mel = melt[(i * move_between + either_side + fill_in) * fps : (i * move_between + either_side * 2 + fill_in) * fps]
-                    first = self.y[x][i * move_between * global_sr : (i * move_between + either_side) * global_sr]
-                    middle = self.y[x][(i * move_between + either_side) * global_sr : (i * move_between + either_side + fill_in) * global_sr]
-                    end = self.y[x][(i * move_between + either_side + fill_in) * global_sr : (i * move_between + either_side * 2 + fill_in) * global_sr]
-                    if first_mel.size == 0 or middle_mel.size == 0 or end_mel.size == 0 or first.size == 0 or middle.size == 0 or end.size == 0:
-                        print(len(self.y[x]), i * move_between * global_sr, (i * move_between + either_side * 2 + fill_in) * global_sr)
-                        print(melt.shape, i * move_between * fps,(i * move_between + either_side * 2 + fill_in) * fps)
-                        print(len(first), len(middle), len(end), len(first_mel), len(middle_mel), len(end_mel))
-                    data.append([first, middle, end, first_mel, middle_mel, end_mel])
-            print(len(data))
-            torch.save(data[:int(0.1 * len(data))], name + ".pt")
+        for x in tqdm(range(len(S_db_mel))):
+            fps = int(self.sr[x] / hop) if hop > 0 else self.sr[x]
+            mel = S_db_mel[x]
+            melt = np.transpose(mel)
+            for i in range(int(melt.shape[0]/(move_between * fps))):
+                first = melt[i * move_between * fps : (i * move_between + either_side) * fps]
+                middle = melt[(i * move_between + either_side) * fps : (i * move_between + either_side + fill_in) * fps]
+                end = melt[(i * move_between + either_side + fill_in) * fps : (i * move_between + either_side * 2 + fill_in) * fps]
+                inputs_before.append(first)
+                inputs_after.append(end)
+                outputs.append(middle)
+        for i in range(5):
+            print(inputs_before[i].shape)
+            print(inputs_after[i].shape)
+            print(outputs[i].shape)
+        return (inputs_before, inputs_after, outputs)
     
     def display_mel(self, mel_list, num):
-        fig, ax = plt.subplots(figsize=(10,5))
-        img = display.specshow(mel_list[num], x_axis='time', y_axis='log', ax=ax)
-        ax.set_title(f'File {self.data[num]} Mel-Spectrogram', fontsize=20)
+        if mel_list == 'full':
+            mel_list = self.mel_full
+        if mel_list == 'cut':
+            mel_list = self.mel_cut
+        # fig, ax = plt.subplots(figsize=(10,5))
+        # img = display.specshow(mel_list[num], x_axis='time', y_axis='log', ax=ax)
+        # ax.set_title(f'File {self.data[num]} Mel-Spectrogram', fontsize=20)
+        plt.figure(figsize=(10, 4))
+        lb.display.specshow(lb.power_to_db(mel_list[num], ref=np.max), y_axis='mel', x_axis='time')
+        plt.title(f'File {self.data[num]} Mel-Spectrogram')
+        plt.colorbar(format='%+2.0f dB')
         plt.show()
         
 if __name__ == "__main__":
     test1 = DataConversion('./dataset/*.mp3')
     test1.load_data()
     test1.display_raw_audio(20)
-    #spect_list = test1.data_to_stft()
-    #test1.display_stft(spect_list, 20)
+    spect_list = test1.data_to_stft()
+    test1.display_stft(spect_list, 20)
     spect_list_mel = test1.data_to_mel()
     test1.display_mel(spect_list_mel, 20)
-    test1.process_and_save_data(spect_list_mel)
