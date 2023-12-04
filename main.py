@@ -36,7 +36,14 @@ weight_decay = 0.02
 epochs = 15
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
-device = "mps"
+# Get cpu, gpu or mps device for training (from https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html).
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
 model = model.to(device)
 print(model)
 
