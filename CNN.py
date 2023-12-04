@@ -61,9 +61,9 @@ train_dataset = TensorDataset(X_train, y_train)
 val_dataset = TensorDataset(X_val, y_val)
 test_dataset = TensorDataset(X_test, y_test)
 
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=16)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=32)
 
 num_epochs = 10
 for epoch in range(num_epochs):
@@ -71,6 +71,8 @@ for epoch in range(num_epochs):
     print(f'Epoch {epoch+1}:')
     train_loss = 0.0
     for partial_spectrogram, full_spectrogram in tqdm(train_loader, desc='Training: ', leave=False):
+        optimizer.zero_grad()
+
         # Forward pass
         outputs = model(partial_spectrogram.to(device))
 
@@ -78,7 +80,6 @@ for epoch in range(num_epochs):
         loss = criterion(outputs, full_spectrogram.to(device))
 
         # Backward and optimize
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         train_loss += loss

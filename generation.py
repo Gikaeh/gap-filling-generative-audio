@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import librosa
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,7 +24,8 @@ new_incomplete_spec = mel_spect_train[0]
 
 # Preprocess the new incomplete spectrogram
 # Assuming you standardized to common values during training
-new_incomplete_spec = (new_incomplete_spec - 0.5) / 0.5
+scaler = MinMaxScaler(feature_range=(-1,1))
+X_train = scaler.fit_transform(new_incomplete_spec)
 new_incomplete_spec = torch.tensor(new_incomplete_spec, dtype=torch.float32).unsqueeze(0).unsqueeze(1).to(device)
 
 # Generate missing chunk using the loaded model
