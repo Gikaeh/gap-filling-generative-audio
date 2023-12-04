@@ -76,6 +76,32 @@ class DataConversion:
             print(S_db_mel[x].shape)
         return S_db_mel
 
+    def process_and_save_data(self):
+        size = len(self.y)
+        for start, end, name in [(0, 0.2, "trainbatch1"),
+                                 (0.2, 0.4, "trainbatch2"),
+                                 (0.4, 0.6, "trainbatch3"),
+                                 (0.6, 0.8, "trainbatch4"),
+                                 (0.8, 0.9, "validation"),
+                                 (0.9, 1.0, "test")]:
+            data = []
+            for x in tqdm(range(int(start * size), int(end * size))):
+                for i in range((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * move_between)):
+                    first = self.y[x][i * move_between * global_sr : (i * move_between + either_side) * global_sr]
+                    middle = self.y[x][(i * move_between + either_side) * global_sr : (i * move_between + either_side + fill_in) * global_sr]
+                    end = self.y[x][(i * move_between + either_side + fill_in) * global_sr : (i * move_between + either_side * 2 + fill_in) * global_sr]
+                    if first.size == 0 or middle.size == 0 or end.size == 0:
+                        print(len(self.y[x]), i * move_between * global_sr, (i * move_between + either_side * 2 + fill_in) * global_sr)
+                        print(melt.shape, i * move_between * fps,(i * move_between + either_side * 2 + fill_in) * fps)
+                        print(len(first), len(middle), len(end), len(first_mel), len(middle_mel), len(end_mel))
+                        raise AssertionError
+                    first_mel = np.transpose(lb.amplitude_to_db(lb.feature.melspectrogram(y=first, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max))
+                    middle_mel = np.transpose(lb.amplitude_to_db(lb.feature.melspectrogram(y=middle, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max))
+                    end_mel = np.transpose(lb.amplitude_to_db(lb.feature.melspectrogram(y=end, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max))
+                    data.append([first, middle, end, first_mel, middle_mel, end_mel])
+            print(len(data))
+            torch.save(data[:int(0.1 * len(data))], name + ".pt")
+                    
     def process_and_save_data(self, S_db_mel):
         random.shuffle(S_db_mel)
         size = len(S_db_mel)
