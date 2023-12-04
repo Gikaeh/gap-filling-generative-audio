@@ -12,9 +12,7 @@ from sklearn.model_selection import train_test_split
 train_losses = []
 val_losses = []
 test_losses = []
-device = torch.device('cuda' if torch.cuda.is_available() and not torch.backends.mps.is_available() else 'cpu')
-if device != 'cuda':
-    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
 test1 = DataConversion('./dataset/*.mp3')
 test1.load_data()
 mel_spect_train, mel_spect_test = test1.data_to_mel( )
