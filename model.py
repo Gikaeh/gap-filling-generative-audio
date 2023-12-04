@@ -6,16 +6,16 @@ class WaveNetBlock(nn.Module):
         super(WaveNetBlock, self).__init__()
         
         # dilated convolutional layer
-        self.dilated_conv_before = nn.Conv1d(in_channels, out_channels, kernel_size = 2, dilation=dilation)
-        self.dilated_conv_after = nn.Conv1d(in_channels, out_channels, kernel_size = 2, dilation=dilation)
-        self.dilated_conv_mel = nn.Conv1d(mel_spectrogram_length, out_channels, kernel_size = 2, dilation=dilation) 
+        self.dilated_conv_before = nn.Conv1d(in_channels, out_channels, kernel_size = 2, dilation=dilation, padding = "same")
+        self.dilated_conv_after = nn.Conv1d(in_channels, out_channels, kernel_size = 2, dilation=dilation, padding = "same")
+        self.dilated_conv_mel = nn.Conv1d(mel_spectrogram_length, out_channels, kernel_size = 2, dilation=dilation, padding = "same") 
 
         # residual convolutional layer
-        self.residual_before_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1)
-        self.residual_after_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1)
+        self.residual_before_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1, padding = "same")
+        self.residual_after_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1, padding = "same")
 
         # skip connection convolutional layer
-        self.skipConn_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1)
+        self.skipConn_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1, padding = "same")
 
     def forward(self, before, after, mel_spectrogram):
         # compute dilated convolution
@@ -29,15 +29,16 @@ class WaveNetBlock(nn.Module):
 
         # Return the sum of the input and residual for the next block,
         # and the skip connection for aggregation in the main WaveNet model
-        return residual_before + before[:, :, :-residual_before.shape[2]], residual_after + after[:, :, :-residual_after.shape[2]], skip
+        return residual_before + before, residual_after + after, skip
+            #residual_before + before[:, :, :-residual_before.shape[2]], residual_after + after[:, :, :-residual_after.shape[2]], skip
 
 class WaveNet(nn.Module):
     def __init__(self, in_channels, residual_channels, mel_spectrogram_length, skip_channels, num_blocks, output_length):
         super(WaveNet, self).__init__()
 
         # input layer
-        self.start_convLayer_before = nn.Conv1d(in_channels, residual_channels, kernel_size = 2)
-        self.start_convLayer_after = nn.Conv1d(in_channels, residual_channels, kernel_size = 2)
+        self.start_convLayer_before = nn.Conv1d(in_channels, residual_channels, kernel_size = 2, padding = "same")
+        self.start_convLayer_after = nn.Conv1d(in_channels, residual_channels, kernel_size = 2, padding = "same")
 
         # get number of blocks
         self.blocks = nn.ModuleList([
@@ -45,8 +46,8 @@ class WaveNet(nn.Module):
         ])
 
         # process skip connections
-        self.end_conv1 = nn.Conv1d(skip_channels, skip_channels, kernel_size=1)
-        self.end_conv2 = nn.Conv1d(skip_channels, in_channels, kernel_size=1)
+        self.end_conv1 = nn.Conv1d(skip_channels, skip_channels, kernel_size=1, padding = "same")
+        self.end_conv2 = nn.Conv1d(skip_channels, in_channels, kernel_size=1,  padding = "same")
         self.output_length = output_length
 
     def forward(self, before, after, mel_spectrogram):
