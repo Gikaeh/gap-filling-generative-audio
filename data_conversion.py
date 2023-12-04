@@ -92,13 +92,17 @@ class DataConversion:
                 fps = int(global_sr / hop)
                 mel = S_db_mel[x]
                 melt = np.transpose(mel)
-                for i in range(int(melt.shape[0]/(move_between * fps))):
+                for i in range((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * fill_in)):
                     first_mel = melt[i * move_between * fps : (i * move_between + either_side) * fps]
                     middle_mel = melt[(i * move_between + either_side) * fps : (i * move_between + either_side + fill_in) * fps]
                     end_mel = melt[(i * move_between + either_side + fill_in) * fps : (i * move_between + either_side * 2 + fill_in) * fps]
                     first = self.y[x][i * move_between * global_sr : (i * move_between + either_side) * global_sr]
                     middle = self.y[x][(i * move_between + either_side) * global_sr : (i * move_between + either_side + fill_in) * global_sr]
                     end = self.y[x][(i * move_between + either_side + fill_in) * global_sr : (i * move_between + either_side * 2 + fill_in) * global_sr]
+                    if first_mel.size == 0 or middle_mel.size == 0 or end_mel.size == 0 or first.size == 0 or middle.size == 0 or end.size == 0:
+                        print(len(self.y[x]), i * move_between * global_sr, (i * move_between + either_side * 2 + fill_in) * global_sr)
+                        print(melt.shape, i * move_between * fps,(i * move_between + either_side * 2 + fill_in) * fps)
+                        print(len(first), len(middle), len(end), len(first_mel), len(middle_mel), len(end_mel))
                     data.append([first, middle, end, first_mel, middle_mel, end_mel])
             print(len(data))
             torch.save(data[:int(0.1 * len(data))], name + ".pt")
