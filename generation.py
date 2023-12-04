@@ -1,14 +1,13 @@
 from model import SimpleCNN
 from data_conversion import DataConversion
 import torch
-from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import librosa
 import matplotlib.pyplot as plt
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-test1 = DataConversion('./dataset/*.mp3')
+test1 = DataConversion('./dataset/1036800.low.mp3')
 test1.load_data()
 mel_spect_train, mel_spect_test = test1.data_to_mel( )
 
@@ -20,11 +19,11 @@ loaded_model.eval()
 
 # Assuming you have a new incomplete mel spectrogram for generation
 # Replace this with your actual incomplete mel spectrogram
-new_incomplete_spec = mel_spect_test[20]
+new_incomplete_spec = mel_spect_train[0]
 
 # Preprocess the new incomplete spectrogram
-scaler = MinMaxScaler()
-new_incomplete_spec = scaler.fit_transform(new_incomplete_spec)
+# Assuming you standardized to common values during training
+new_incomplete_spec = (new_incomplete_spec - 0.5) / 0.5
 new_incomplete_spec = torch.tensor(new_incomplete_spec, dtype=torch.float32).unsqueeze(0).unsqueeze(1).to(device)
 
 # Generate missing chunk using the loaded model

@@ -87,7 +87,7 @@ class DataConversion:
             mel_cut[:, cut_start:cut_end] = 0
             self.mel_cut.append(mel_cut)
 
-        return self.mel_full, self.mel_cut
+        return self.mel_cut, self.mel_full
 
     # def data_to_mel(self, device):
     #     S_db_mel = []

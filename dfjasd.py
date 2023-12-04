@@ -163,7 +163,7 @@ import matplotlib.pyplot as plt
 import librosa
 
 # Assuming you have a DataConversion instance named test1
-test1 = DataConversion('./dataset/12100.low.mp3')
+test1 = DataConversion('./dataset/1036800.low.mp3')
 test1.load_data()
 mel_spect_full, mel_spect_cut = test1.data_to_mel()
 
