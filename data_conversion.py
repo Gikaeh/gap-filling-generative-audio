@@ -14,6 +14,7 @@ either_side = 10
 fill_in = 2
 move_between = 10
 global_sr = 22050
+n_mels = 128
 
 class DataConversion:
     def __init__(self, file_dir):
@@ -68,7 +69,7 @@ class DataConversion:
 
         print('Converting to Mel-Spectrogram:')
         for x in tqdm(range(len(self.data))):
-            S = lb.feature.melspectrogram(y=self.y[x], sr=global_sr, n_mels=128, hop_length = hop)
+            S = lb.feature.melspectrogram(y=self.y[x], sr=global_sr, n_mels=n_mels, hop_length = hop)
             S_db_mel.append(lb.amplitude_to_db(S, ref=np.max))
         for x in range(5):
             print(self.y[x].shape)

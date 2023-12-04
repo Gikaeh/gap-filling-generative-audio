@@ -3,6 +3,7 @@ from model import WaveNet
 import random
 import numpy
 import torch
+import data_conversion
 from torch.utils.data import random_split
 
 #print(WaveNet())
@@ -35,7 +36,9 @@ def train(dataloader, model, loss_fn, optimizer):
     avgloss = 0
     for batch_num, batch in enumerate(dataloader):
         first, middle, end, first_mel, middle_mel, end_mel = [t.to(device) for t in batch]
-        
+        if batch_num == 0: print(first.shape)
+        first, middle, end = torch.unsqueeze(first, 1), torch.unsqueeze(middle, 1), torch.unsqueeze(end, 1)
+        if batch_num == 0: print(first.shape)
         # Compute prediction error
         pred = model(first, end, middle_mel)
         loss = loss_fn(pred, middle)
@@ -53,10 +56,10 @@ def train(dataloader, model, loss_fn, optimizer):
 
 
 # These are obviously incorrect values, just having something so it compiles
-model = WaveNet(1, 32, 32, 4, 2 * 22050)
+model = WaveNet(1, 32, 32, data_conversion.n_mels, 4, 4, data_conversion.fill_in * data_conversion.global_sr)
 lr = 0.001
 batch_size = 64
-weight_decay = 0.02
+weight_decay = 0
 epochs = 15
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
