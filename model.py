@@ -1,23 +1,25 @@
-import torch
+import torch, data_conversion
 import torch.nn as nn
+
+upscale_m = torch.nn.Upsample(size = data_conversion.global_sr * data_conversion.either_side, mode = 'nearest')
 
 class WaveNetBlock(nn.Module):
     def __init__(self, in_channels, mel_spectrogram_length, out_channels, dilation):
         super(WaveNetBlock, self).__init__()
         
         # dilated convolutional layer
-        self.dilated_conv_before = nn.Conv1d(in_channels, out_channels, kernel_size = 2, dilation=dilation, padding = "same")
-        self.dilated_conv_after = nn.Conv1d(in_channels, out_channels, kernel_size = 2, dilation=dilation, padding = "same")
-        self.dilated_conv_mel = nn.Conv1d(mel_spectrogram_length, out_channels, kernel_size = 2, dilation=dilation, padding = "same") 
+        self.dilated_conv_before = nn.Conv1d(in_channels, in_channels, kernel_size = 2, dilation=dilation, padding = "same")
+        self.dilated_conv_after = nn.Conv1d(in_channels, in_channels, kernel_size = 2, dilation=dilation, padding = "same")
+        self.dilated_conv_mel = nn.Conv1d(mel_spectrogram_length, in_channels, kernel_size = 2, dilation=dilation, padding = "same") 
 
         # residual convolutional layer
-        self.residual_before_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1, padding = "same")
-        self.residual_after_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1, padding = "same")
+        self.residual_before_conv = nn.Conv1d(in_channels, in_channels, kernel_size = 1, padding = "same")
+        self.residual_after_conv = nn.Conv1d(in_channels, in_channels, kernel_size = 1, padding = "same")
 
         # skip connection convolutional layer
-        self.skipConn_conv = nn.Conv1d(out_channels, out_channels, kernel_size = 1, padding = "same")
+        self.skipConn_conv = nn.Conv1d(in_channels, out_channels, kernel_size = 1, padding = "same")
 
-    def forward(self, before, after, mel_spectrogram):
+    def forward(self, before, after, mel):
         # compute dilated convolution
         dilation = torch.tanh(self.dilated_conv_before(before) + self.dilated_conv_after(after) + self.dilated_conv_mel(mel))
         gated_output = torch.sigmoid(self.dilated_conv_before(before) + self.dilated_conv_after(after) + self.dilated_conv_mel(mel))
@@ -54,6 +56,7 @@ class WaveNet(nn.Module):
         # Initial convolution
         before = self.start_convLayer_before(before)
         after = self.start_convLayer_after(after)
+        mel_spectrogram = upscale_m(mel_spectrogram)
 
         # Summing skip connections from all blocks
         skip_connections = 0
@@ -66,7 +69,7 @@ class WaveNet(nn.Module):
 
         # Two final convolutional layers
         x = torch.relu(self.end_conv1(x))
-        x = self.end_conv2(x)[:self.output_length]
-
+        x = self.end_conv2(x)[:,:,:self.output_length]
+        #x = (2 * x) / torch.max(x) - 1
         return x
 
