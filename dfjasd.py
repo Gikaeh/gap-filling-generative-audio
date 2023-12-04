@@ -1,3 +1,58 @@
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+        self.relu = nn.ReLU()
+        
+    def forward(self, x):
+        x = self.relu(self.conv1(x))
+        x = self.relu(self.conv2(x))
+        x = self.conv3(x)
+        
+        return x
+    
+class DataConversion:
+    def __init__(self, file_dir):
+        self.file_dir = file_dir
+        self.data = glob(file_dir)
+        self.y = []
+        self.sr = []
+        self.mel_full = []
+        self.mel_cut = []
+
+    def load_data(self):
+        print('Loading Data:')
+
+        for x in tqdm(range(len(self.data))):
+            yt, srt = lb.load(self.data[x], sr = global_sr)
+            # TODO: Change this to upsample/downsample other sample rates
+            assert srt == global_sr
+            self.y.append(yt)
+
+    def data_to_mel(self):
+            print('Converting to Mel-Spectrogram:')
+
+            for x in tqdm(range(len(self.data))):
+                # Extract a 20-second segment
+                start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
+                segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
+
+                # Generate mel-spectrogram for the complete 20 seconds
+                mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
+                self.mel_full.append(mel_spect)
+
+                # Save a 3-second cut from the middle
+                cut_start = int((len(mel_spect) / 2) - 1)
+                cut_end = cut_start + 7 
+
+                # Set the 3 seconds in the original mel-spectrogram to zero to create the input
+                mel_spect[:, cut_start:cut_end] = 0
+                self.mel_cut.append(mel_spect)
+
+            return self.mel_full, self.mel_cut
+    
 from data_conversion import DataConversion
 from model import WaveNet, SimpleCNN
 from tqdm import tqdm
@@ -102,5 +157,3 @@ for epoch in range(num_epochs):
         avg_test_loss = test_loss / len(X_test)
 
     print(f'Validation Loss: {avg_val_loss.item()}, Test Loss: {avg_test_loss.item()}')
-
-torch.save(model.state_dict(), 'CNN.pth')

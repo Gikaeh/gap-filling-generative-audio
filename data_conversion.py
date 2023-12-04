@@ -78,8 +78,8 @@ class DataConversion:
             self.mel_full.append(mel_spect)
 
             # Save a 3-second cut from the middle
-            cut_start = int((len(mel_spect) / 2) - 1)
-            cut_end = cut_start + 7 
+            cut_start = int((len(mel_spect) / 2) - 4)
+            cut_end = cut_start + 8 
 
             # Set the 3 seconds in the original mel-spectrogram to zero to create the input
             mel_spect[:, cut_start:cut_end] = 0
