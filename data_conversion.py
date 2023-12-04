@@ -65,20 +65,42 @@ class DataConversion:
     #     ax.set_title(f'File {self.data[num]} Spectrogram', fontsize=20)
     #     plt.show()
 
-    def data_to_mel(self, device):
-        S_db_mel = []
-
+    def data_to_mel(self):
         print('Converting to Mel-Spectrogram:')
 
         for x in tqdm(range(len(self.data))):
-            if hop > 0: S = lb.feature.melspectrogram(y=self.y[x], sr=self.sr[x], n_mels=128, hop_length = hop)
-            else: S = self.y[x]
-            S_db_mel.append(lb.amplitude_to_db(S, ref=np.max))
-        for x in range(5):
-            print(self.y[x].shape)
-            print(self.sr[x])
-            print(S_db_mel[x].shape)
-        return S_db_mel
+            # Extract a 20-second segment
+            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * self.sr[x]))
+            segment = self.y[x][int(start_time):int(start_time) + 20 * self.sr[x]]
+
+            # Generate mel-spectrogram for the complete 20 seconds
+            mel_spect = lb.feature.melspectrogram(y=segment, sr=self.sr[x])
+            self.mel_full.append(mel_spect)
+
+            # Save a 3-second cut from the middle
+            cut_start = int((len(mel_spect) / 2) - 1)
+            cut_end = cut_start + 7 
+
+            # Set the 3 seconds in the original mel-spectrogram to zero to create the input
+            mel_spect[:, cut_start:cut_end] = 0
+            self.mel_cut.append(mel_spect)
+
+        return self.mel_full, self.mel_cut
+
+    # def data_to_mel(self, device):
+    #     S_db_mel = []
+
+    #     print('Converting to Mel-Spectrogram:')
+
+    #     for x in tqdm(range(len(self.data))):
+    #         if hop > 0: S = lb.feature.melspectrogram(y=self.y[x], sr=self.sr[x], n_mels=128, hop_length = hop)
+    #         else: S = self.y[x]
+    #         S_db_mel.append(lb.amplitude_to_db(S, ref=np.max))
+    #     for x in range(5):
+    #         print(self.y[x].shape)
+    #         print(self.sr[x])
+    #         print(S_db_mel[x].shape)
+    #     return S_db_mel
 
     def make_inputs_outputs(self, S_db_mel):
         inputs_before = []
