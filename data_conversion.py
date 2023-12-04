@@ -7,6 +7,7 @@ import librosa as lb
 from librosa import display
 from tqdm import tqdm
 import random
+import copy
 
 hop = 128
 either_side = 10
@@ -78,12 +79,13 @@ class DataConversion:
             self.mel_full.append(mel_spect)
 
             # Save a 3-second cut from the middle
-            cut_start = int((len(mel_spect) / 2) - 4)
-            cut_end = cut_start + 8 
-
+            cut_start = int((mel_spect.shape[1] / 2) - 43.1 * 2)
+            cut_end = int(cut_start + 43.1 * 4)
+            
             # Set the 3 seconds in the original mel-spectrogram to zero to create the input
-            mel_spect[:, cut_start:cut_end] = 0
-            self.mel_cut.append(mel_spect)
+            mel_cut = copy.deepcopy(mel_spect)
+            mel_cut[:, cut_start:cut_end] = 0
+            self.mel_cut.append(mel_cut)
 
         return self.mel_full, self.mel_cut
 
@@ -130,9 +132,13 @@ class DataConversion:
             mel_list = self.mel_full
         if mel_list == 'cut':
             mel_list = self.mel_cut
-        fig, ax = plt.subplots(figsize=(10,5))
-        img = display.specshow(mel_list[num], x_axis='time', y_axis='log', ax=ax)
-        ax.set_title(f'File {self.data[num]} Mel-Spectrogram', fontsize=20)
+        # fig, ax = plt.subplots(figsize=(10,5))
+        # img = display.specshow(mel_list[num], x_axis='time', y_axis='log', ax=ax)
+        # ax.set_title(f'File {self.data[num]} Mel-Spectrogram', fontsize=20)
+        plt.figure(figsize=(10, 4))
+        lb.display.specshow(lb.power_to_db(mel_list[num], ref=np.max), y_axis='mel', x_axis='time')
+        plt.title(f'File {self.data[num]} Mel-Spectrogram')
+        plt.colorbar(format='%+2.0f dB')
         plt.show()
         
 if __name__ == "__main__":

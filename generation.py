@@ -8,14 +8,13 @@ import matplotlib.pyplot as plt
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 test1 = DataConversion('./dataset/*.mp3')
 test1.load_data()
 mel_spect_train, mel_spect_test = test1.data_to_mel( )
 
 # Load the saved model for generation
 loaded_model = SimpleCNN()
-loaded_model.load_state_dict(torch.load('your_model.pth'))
+loaded_model.load_state_dict(torch.load('CNN.pth'))
 loaded_model.to(device)
 loaded_model.eval()
 
