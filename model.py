@@ -1,7 +1,7 @@
-import torch, data_conversion
+import torch, data_conversion_e
 import torch.nn as nn
 
-upscale_m = torch.nn.Upsample(size = data_conversion.global_sr * data_conversion.either_side, mode = 'nearest')
+upscale_m = torch.nn.Upsample(size = data_conversion_e.global_sr * data_conversion_e.either_side, mode = 'nearest')
 
 class WaveNetBlock(nn.Module):
     def __init__(self, in_channels, mel_spectrogram_length, out_channels, dilation):
