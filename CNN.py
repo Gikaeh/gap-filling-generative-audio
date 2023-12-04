@@ -111,10 +111,14 @@ for epoch in range(num_epochs):
     test_losses.append(avg_test_loss)
     print(f'Train Loss: {avg_train_loss.item()}, Validation Loss: {avg_val_loss.item()}, Test Loss: {avg_test_loss.item()}')
 
+train_losses = [t.item() for t in train_losses]  # Convert train_losses to a list of float values
+val_losses = [t.item() for t in val_losses]      # Convert val_losses to a list of float values
+test_losses = [t.item() for t in test_losses]    # Convert test_losses to a list of float values
+
 plt.figure(figsize=(10, 5))
-plt.plot(train_losses.detach().cpu().numpy(), label='Training Loss')
-plt.plot(val_losses.detach().cpu().numpy(), label='Validation Loss')
-plt.plot(test_losses.detach().cpu().numpy(), label='Testing Loss')
+plt.plot(train_losses, label='Training Loss')
+plt.plot(val_losses, label='Validation Loss')
+plt.plot(test_losses, label='Testing Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
