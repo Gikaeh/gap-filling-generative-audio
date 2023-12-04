@@ -70,11 +70,11 @@ class DataConversion:
 
         for x in tqdm(range(len(self.data))):
             # Extract a 20-second segment
-            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * self.sr[x]))
-            segment = self.y[x][int(start_time):int(start_time) + 20 * self.sr[x]]
+            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
+            segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
 
             # Generate mel-spectrogram for the complete 20 seconds
-            mel_spect = lb.feature.melspectrogram(y=segment, sr=self.sr[x])
+            mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
             self.mel_full.append(mel_spect)
 
             # Save a 3-second cut from the middle

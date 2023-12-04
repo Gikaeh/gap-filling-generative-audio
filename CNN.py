@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 test1 = DataConversion('./dataset/*.mp3')
 test1.load_data()
-mel_spect_train, mel_spect_test = test1.data_to_mel(device)
+mel_spect_train, mel_spect_test = test1.data_to_mel( )
 # test1.display_mel('full', 20)
 # test1.display_mel('cut', 20)
 
@@ -33,7 +33,11 @@ scaler = MinMaxScaler()
 X_train = [scaler.fit_transform(spec) for spec in X_train]
 X_train = np.array(X_train, dtype=np.float32)
 X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1)
-val_full = [scaler.fit_transform(spec) for spec in X_val]
+
+X_val = [scaler.fit_transform(spec) for spec in X_val]
+X_val = np.array(X_val, dtype=np.float32)
+X_val = torch.tensor(X_val, dtype=torch.float32).unsqueeze(1)
+
 X_test = [scaler.fit_transform(spec) for spec in X_test]
 X_test = np.array(X_test, dtype=np.float32)
 X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1)
@@ -43,7 +47,10 @@ y_train = [scaler.fit_transform(spec) for spec in y_train]
 y_train = np.array(y_train, dtype=np.float32)
 y_train = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
 
-val_partial = [scaler.fit_transform(spec) for spec in y_val]
+y_val = [scaler.fit_transform(spec) for spec in y_val]
+y_val = np.array(y_val, dtype=np.float32)
+y_val = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1)
+
 y_test = [scaler.fit_transform(spec) for spec in y_test]
 y_test = np.array(y_test, dtype=np.float32)
 y_test = torch.tensor(y_test, dtype=torch.float32).unsqueeze(1)
