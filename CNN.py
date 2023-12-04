@@ -32,28 +32,28 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 scaler = MinMaxScaler()
 X_train = [scaler.fit_transform(spec) for spec in X_train]
 X_train = np.array(X_train, dtype=np.float32)
-X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1)
+X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1).to(device)
 
 X_val = [scaler.fit_transform(spec) for spec in X_val]
 X_val = np.array(X_val, dtype=np.float32)
-X_val = torch.tensor(X_val, dtype=torch.float32).unsqueeze(1)
+X_val = torch.tensor(X_val, dtype=torch.float32).unsqueeze(1).to(device)
 
 X_test = [scaler.fit_transform(spec) for spec in X_test]
 X_test = np.array(X_test, dtype=np.float32)
-X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1)
+X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1).to(device)
 
 
 y_train = [scaler.fit_transform(spec) for spec in y_train]
 y_train = np.array(y_train, dtype=np.float32)
-y_train = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
+y_train = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1).to(device)
 
 y_val = [scaler.fit_transform(spec) for spec in y_val]
 y_val = np.array(y_val, dtype=np.float32)
-y_val = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1)
+y_val = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1).to(device)
 
 y_test = [scaler.fit_transform(spec) for spec in y_test]
 y_test = np.array(y_test, dtype=np.float32)
-y_test = torch.tensor(y_test, dtype=torch.float32).unsqueeze(1)
+y_test = torch.tensor(y_test, dtype=torch.float32).unsqueeze(1).to(device)
 
 
 train_dataset = TensorDataset(X_train, y_train)
@@ -70,10 +70,10 @@ for epoch in range(num_epochs):
     print(f'Training Epoch {epoch+1}')
     for full_spectrogram, partial_spectrogram in tqdm(train_loader, leave=False):
         # Forward pass
-        outputs = model(full_spectrogram)
+        outputs = model(full_spectrogram.to(device))
 
         # Compute the loss
-        loss = criterion(outputs, partial_spectrogram)
+        loss = criterion(outputs, partial_spectrogram.to(device))
 
         # Backward and optimize
         optimizer.zero_grad()
@@ -86,18 +86,18 @@ for epoch in range(num_epochs):
         val_loss = 0.0
         for val_full_spectrogram, val_partial_spectrogram in tqdm(val_loader, leave=False):
 
-            val_outputs = model(val_full_spectrogram)
-            val_loss += criterion(val_outputs, val_partial_spectrogram)
+            val_outputs = model(val_full_spectrogram.to(device))
+            val_loss += criterion(val_outputs, val_partial_spectrogram.to(device))
 
-        avg_val_loss = val_loss / len(val_full)
+        avg_val_loss = val_loss / len(val_full_spectrogram)
 
     # Test loop
     with torch.no_grad():
         test_loss = 0.0
         for test_full_spectrogram, test_partial_spectrogram in tqdm(test_loader, leave=False):
 
-            test_outputs = model(test_full_spectrogram)
-            test_loss += criterion(test_outputs, test_partial_spectrogram)
+            test_outputs = model(test_full_spectrogram.to(device))
+            test_loss += criterion(test_outputs, test_partial_spectrogram.to(device))
 
         avg_test_loss = test_loss / len(X_test)
 
