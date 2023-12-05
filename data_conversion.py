@@ -29,7 +29,7 @@ class DataConversion:
             yt, srt = lb.load(self.data[x], sr = global_sr)
             assert srt == global_sr
             self.y.append(yt)
-        
+
     def display_data(self):
         for x in range(len(self.data)):
             print(self.data[x])
@@ -64,6 +64,10 @@ class DataConversion:
 
     def data_to_mel(self):
         print('Converting to Mel-Spectrogram:')
+
+        if self.vessl == True:
+            data_loaded = np.load(os.path.join('./dataset', 'y_arrays.npz'))
+            self.y = [data_loaded[f] for f in data_loaded.files]
 
         for x in tqdm(range(len(self.data))):
             # Extract a 20-second segment
