@@ -17,8 +17,8 @@ if __name__ == "__main__":
     val_losses = []
     test_losses = []
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    test1 = DataConversion('./dataset/*.mp3')
-    test1.load_data()
+    test1 = DataConversion('./dataset/*.mp3', True)
+    # test1.load_data()
     mel_spect_train, mel_spect_test = test1.data_to_mel( )
     # test1.display_mel('full', 20)
     # test1.display_mel('cut', 20)
