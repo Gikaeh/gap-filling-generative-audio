@@ -1,9 +1,9 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pylab as plt
 import seaborn as sns
 from glob import glob
-from pydub import AudioSegment
 import librosa as lb
 from librosa import display
 from tqdm import tqdm
@@ -13,30 +13,23 @@ import copy
 global_sr = 22050
 
 class DataConversion:
-    def __init__(self, file_dir):
+    def __init__(self, file_dir, vessl = False):
         self.file_dir = file_dir
         self.data = glob(file_dir)
         self.y = []
         self.sr = []
         self.mel_full = []
         self.mel_cut = []
+        self.vessl = vessl
 
     def load_data(self):
         print('Loading Data:')
 
-        # for x in tqdm(range(len(self.data))):
-        #     yt, srt = lb.load(self.data[x], sr = global_sr)
-        #     assert srt == global_sr
-        #     self.y.append(yt)
         for x in tqdm(range(len(self.data))):
-            audio = AudioSegment.from_file(self.data[x])
-            audio = audio.set_frame_rate(global_sr)
-
-            # Convert audio to NumPy array
-            yt = np.array(audio.get_array_of_samples())
+            yt, srt = lb.load(self.data[x], sr = global_sr)
+            assert srt == global_sr
             self.y.append(yt)
-
-
+        
     def display_data(self):
         for x in range(len(self.data)):
             print(self.data[x])
@@ -90,6 +83,10 @@ class DataConversion:
             mel_cut[:, cut_start:cut_end] = 0
             self.mel_cut.append(mel_cut)
 
+        if self.vessl == True:
+            np.savez_compressed(os.path.join('./dataset', 'mel_spectrogram_cut.npz'), self.mel_cut)
+            np.savez_compressed(os.path.join('./dataset', 'mel_spectrogram_full.npz'), self.mel_full)
+
         return self.mel_cut, self.mel_full
 
     def display_mel(self, mel_list, num):
@@ -105,10 +102,11 @@ class DataConversion:
         plt.show()
         
 if __name__ == "__main__":
-    test1 = DataConversion('./dataset/*.mp3')
+    test1 = DataConversion('./dataset/*.mp3', True)
     test1.load_data()
-    test1.display_raw_audio(20)
-    spect_list = test1.data_to_stft()
-    test1.display_stft(spect_list, 20)
-    spect_list_mel = test1.data_to_mel()
-    test1.display_mel(spect_list_mel, 20)
+    # test1.display_raw_audio(20)
+    # spect_list = test1.data_to_stft()
+    # test1.display_stft(spect_list, 20)
+    # spect_list_cut, spect_list_full = test1.data_to_mel()
+    # test1.display_mel('full', 20)
+    # test1.display_mel('cut', 20)
