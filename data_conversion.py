@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import seaborn as sns
 from glob import glob
+from pydub import AudioSegment
 import librosa as lb
 from librosa import display
 from tqdm import tqdm
@@ -23,10 +24,18 @@ class DataConversion:
     def load_data(self):
         print('Loading Data:')
 
+        # for x in tqdm(range(len(self.data))):
+        #     yt, srt = lb.load(self.data[x], sr = global_sr)
+        #     assert srt == global_sr
+        #     self.y.append(yt)
         for x in tqdm(range(len(self.data))):
-            yt, srt = lb.load(self.data[x], sr = global_sr)
-            assert srt == global_sr
+            audio = AudioSegment.from_file(self.data[x])
+            audio = audio.set_frame_rate(global_sr)
+
+            # Convert audio to NumPy array
+            yt = np.array(audio.get_array_of_samples())
             self.y.append(yt)
+
 
     def display_data(self):
         for x in range(len(self.data)):
