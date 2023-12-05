@@ -23,9 +23,9 @@ if __name__ == "__main__":
     # mel_spect_train, mel_spect_test = test1.data_to_mel( )
     # test1.display_mel('full', 20)
     # test1.display_mel('cut', 20)
-    mel_cut_loaded = np.load(os.path.join('./dataset', 'mel_spectrogram_cut.npz'))
+    mel_cut_loaded = np.load(os.path.join('./dataset', 'mel_spectrogram_cut.npz'), allow_pickle=True)
     mel_spect_train = [mel_cut_loaded[f] for f in sorted(mel_cut_loaded.keys())]
-    mel_full_loaded = np.load(os.path.join('./dataset', 'mel_spectrogram_full.npz'))
+    mel_full_loaded = np.load(os.path.join('./dataset', 'mel_spectrogram_full.npz'), allow_pickle=True)
     mel_spect_test = [mel_full_loaded[f] for f in sorted(mel_full_loaded.keys())]
 
 
