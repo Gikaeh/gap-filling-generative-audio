@@ -1,3 +1,4 @@
+import os
 from data_conversion import DataConversion
 from model import SimpleCNN
 import vessl
@@ -17,11 +18,16 @@ if __name__ == "__main__":
     val_losses = []
     test_losses = []
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    test1 = DataConversion('./dataset/*.mp3', True)
+    # test1 = DataConversion('./dataset/*.mp3')
     # test1.load_data()
-    mel_spect_train, mel_spect_test = test1.data_to_mel( )
+    # mel_spect_train, mel_spect_test = test1.data_to_mel( )
     # test1.display_mel('full', 20)
     # test1.display_mel('cut', 20)
+    mel_cut_loaded = np.load(os.path.join('./dataset', 'mel_spectrogram_cut.npz'))
+    mel_spect_train = [mel_cut_loaded[f] for f in sorted(mel_cut_loaded.keys())]
+    mel_full_loaded = np.load(os.path.join('./dataset', 'mel_spectrogram_full.npz'))
+    mel_spect_test = [mel_full_loaded[f] for f in sorted(mel_full_loaded.keys())]
+
 
     X_train_temp, X_test, y_train_temp, y_test = train_test_split(mel_spect_train, mel_spect_test, test_size=0.2, random_state=42)
     X_train, X_val, y_train, y_val = train_test_split(X_train_temp, y_train_temp, test_size=0.25, random_state=42)

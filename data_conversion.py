@@ -65,10 +65,6 @@ class DataConversion:
     def data_to_mel(self):
         print('Converting to Mel-Spectrogram:')
 
-        if self.vessl == True:
-            data_loaded = np.load(os.path.join('./dataset', 'y_arrays.npz'))
-            self.y = [data_loaded[f] for f in data_loaded.files]
-
         for x in tqdm(range(len(self.data))):
             # Extract a 20-second segment
             start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
@@ -88,10 +84,10 @@ class DataConversion:
             self.mel_cut.append(mel_cut)
 
         if self.vessl == True:
-            np.savez_compressed(os.path.join('./dataset', 'mel_spectrogram_cut.npz'), self.mel_cut)
-            np.savez_compressed(os.path.join('./dataset', 'mel_spectrogram_full.npz'), self.mel_full)
-
-        return self.mel_cut, self.mel_full
+            np.savez_compressed(os.path.join('./dataset', 'mel_spectrogram_cut.npz'), *self.mel_cut)
+            np.savez_compressed(os.path.join('./dataset', 'mel_spectrogram_full.npz'), *self.mel_full)
+        else:
+            return self.mel_cut, self.mel_full
 
     def display_mel(self, mel_list, num):
         if mel_list == 'full':
@@ -108,6 +104,7 @@ class DataConversion:
 if __name__ == "__main__":
     test1 = DataConversion('./dataset/*.mp3', True)
     test1.load_data()
+    test1.data_to_mel()
     # test1.display_raw_audio(20)
     # spect_list = test1.data_to_stft()
     # test1.display_stft(spect_list, 20)
