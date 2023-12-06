@@ -9,7 +9,7 @@ from librosa import display
 from tqdm import tqdm
 import random
 import copy
-from pydub import AudioSegment
+# from pydub import AudioSegment
 
 global_sr = 22050
 
@@ -30,13 +30,13 @@ class DataConversion:
             assert srt == global_sr
             self.y.append(yt)
 
-    def convert_mp3_to_wav(self):
-        print('Converting from mp3 to wav')
-        for x in tqdm(range(len(self.data))):
-            file_name, file_extension = os.path.splitext(self.data[x])
-            wav_file = file_name + ".wav"
-            audio = AudioSegment.from_mp3(self.data[x])
-            audio.export(wav_file, format="wav")
+    # def convert_mp3_to_wav(self):
+    #     print('Converting from mp3 to wav')
+    #     for x in tqdm(range(len(self.data))):
+    #         file_name, file_extension = os.path.splitext(self.data[x])
+    #         wav_file = file_name + ".wav"
+    #         audio = AudioSegment.from_mp3(self.data[x])
+    #         audio.export(wav_file, format="wav")
 
     def display_data(self):
         for x in range(len(self.data)):
