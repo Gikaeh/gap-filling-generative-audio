@@ -13,13 +13,13 @@ from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
     # vessl.init()
-    path = os.path.realpath(__file__) 
-    print(path) 
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    dataset_path = os.path.join(script_dir, '..', 'dataset', '*.wav')
     train_losses = []
     val_losses = []
     test_losses = []
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    test1 = DataConversion('/mnt/vessl/dataset/*.wav')
+    test1 = DataConversion(dataset_path)
     test1.load_data()
     mel_spect_train, mel_spect_test = test1.data_to_mel()
     # test1.display_mel('full', 20)
