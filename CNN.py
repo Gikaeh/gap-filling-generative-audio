@@ -19,7 +19,7 @@ if __name__ == "__main__":
     val_losses = []
     test_losses = []
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    test1 = DataConversion('..\\dataset\\*.wav')
+    test1 = DataConversion('/mnt/vessl/dataset/*.wav')
     test1.load_data()
     mel_spect_train, mel_spect_test = test1.data_to_mel()
     # test1.display_mel('full', 20)
