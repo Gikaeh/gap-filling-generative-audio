@@ -3,7 +3,7 @@ from model import WaveNet
 import random
 import numpy
 import torch
-import data_conversion, auraloss
+import data_conversion_e as data_conversion, auraloss
 from torch.utils.data import random_split
 import soundfile as sf
 #print(WaveNet())
@@ -61,10 +61,10 @@ device = (
     if torch.backends.mps.is_available()
     else "cpu"
 )
-model = WaveNet(1, 32, data_conversion.n_mels, 32, 6, data_conversion.fill_in * data_conversion.global_sr)
+model = WaveNet(1, 16, data_conversion.n_mels, 16, 6, data_conversion.fill_in * data_conversion.global_sr)
 model = model.to(device)
 lr = 0.0002
-batch_size = 8
+batch_size = 16
 weight_decay = 0
 epochs = 10
 loss_fn = torch.nn.MSELoss()
