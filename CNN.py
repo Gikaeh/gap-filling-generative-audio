@@ -12,14 +12,14 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
-    # vessl.init()
+    vessl.init()
     # script_dir = os.path.dirname(os.path.abspath(__file__))
     # dataset_path = os.path.join(script_dir, '..', 'dataset', '*.wav')
     train_losses = []
     val_losses = []
     test_losses = []
     device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
-    test1 = DataConversion('vessl-dataset://2302-AI-LEC-DEEP/music-ingraining-dataset/*.wav')
+    test1 = DataConversion('./dataset/*.mp3')
     test1.load_data()
     mel_spect_train, mel_spect_test = test1.data_to_mel()
     # test1.display_mel('full', 20)
@@ -41,11 +41,11 @@ if __name__ == "__main__":
     X_train = np.array(X_train, dtype=np.float32)
     X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1).to(device)
 
-    X_val = [scaler.fit_transform(spec) for spec in X_val]
+    X_val = [scaler.transform(spec) for spec in X_val]
     X_val = np.array(X_val, dtype=np.float32)
     X_val = torch.tensor(X_val, dtype=torch.float32).unsqueeze(1).to(device)
 
-    X_test = [scaler.fit_transform(spec) for spec in X_test]
+    X_test = [scaler.transform(spec) for spec in X_test]
     X_test = np.array(X_test, dtype=np.float32)
     X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1).to(device)
 
@@ -54,11 +54,11 @@ if __name__ == "__main__":
     y_train = np.array(y_train, dtype=np.float32)
     y_train = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1).to(device)
 
-    y_val = [scaler.fit_transform(spec) for spec in y_val]
+    y_val = [scaler.transform(spec) for spec in y_val]
     y_val = np.array(y_val, dtype=np.float32)
     y_val = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1).to(device)
 
-    y_test = [scaler.fit_transform(spec) for spec in y_test]
+    y_test = [scaler.transform(spec) for spec in y_test]
     y_test = np.array(y_test, dtype=np.float32)
     y_test = torch.tensor(y_test, dtype=torch.float32).unsqueeze(1).to(device)
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         train_losses.append(avg_train_loss)
         val_losses.append(avg_val_loss)
         test_losses.append(avg_test_loss)
-        print(f'Train Loss: {avg_train_loss.item()}, Validation Loss: {avg_val_loss.item()}, Test Loss: {avg_test_loss.item()}')
+        print(f'Train Loss: {avg_train_loss}, Validation Loss: {avg_val_loss}, Test Loss: {avg_test_loss}')
 
     # train_losses = [t.item() for t in train_losses]  # Convert train_losses to a list of float values
     # val_losses = [t.item() for t in val_losses]      # Convert val_losses to a list of float values
@@ -136,4 +136,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    torch.save(model.state_dict(), 'CNN.pth')
+    torch.save(model.state_dict(), 'output/CNN.pth')

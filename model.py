@@ -76,21 +76,29 @@ class WaveNet(nn.Module):
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.conv4 = nn.Conv2d(128, 1, kernel_size=3, padding=1)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout2d(p=0.2)
-        
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.Conv2d(128, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 1, kernel_size=3, padding=1),
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        )
+    
     def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x))
-        x = self.relu(self.conv3(x))
-        x = self.dropout(x)
-        x = self.conv4(x)
-        
-        return x
+        # Encode
+        x1 = self.encoder(x)
+        # Decode
+        x2 = self.decoder(x1)
+
+        return x2
     
 class Generator(nn.Module):
     def __init__(self):

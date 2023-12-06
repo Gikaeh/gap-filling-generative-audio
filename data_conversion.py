@@ -74,23 +74,24 @@ class DataConversion:
         print('Converting to Mel-Spectrogram:')
 
         for x in tqdm(range(len(self.data))):
-            # Extract a 20-second segment
-            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
-            segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
+            for y in range(0,3):
+                # Extract a 20-second segment
+                start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
+                segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
 
-            # Generate mel-spectrogram for the complete 20 seconds
-            mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
-            self.mel_full.append(mel_spect)
+                # Generate mel-spectrogram for the complete 20 seconds
+                mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
+                self.mel_full.append(mel_spect)
 
-            # Save a randim cut from the middle
-            random_seconds = random.randint(1, 4)
-            cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (random_seconds/2))
-            cut_end = int(cut_start + 43.1 * random_seconds)
-            
-            # Set the random cut in the original mel-spectrogram to zero to create the input
-            mel_cut = copy.deepcopy(mel_spect)
-            mel_cut[:, cut_start:cut_end] = 0
-            self.mel_cut.append(mel_cut)
+                # Save a randim cut from the middle
+                # random_seconds = random.randint(1, 4)
+                cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.5/2))
+                cut_end = int(cut_start + 43.1 * .5)
+                
+                # Set the random cut in the original mel-spectrogram to zero to create the input
+                mel_cut = copy.deepcopy(mel_spect)
+                mel_cut[:, cut_start:cut_end] = 0
+                self.mel_cut.append(mel_cut)
 
         return self.mel_cut, self.mel_full
 
