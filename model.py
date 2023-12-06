@@ -81,7 +81,7 @@ class SimpleCNN(nn.Module):
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.conv4 = nn.Conv2d(128, 1, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout2d(p=0.5)
+        self.dropout = nn.Dropout2d(p=0.2)
         
     def forward(self, x):
         x = self.relu(self.conv1(x))
