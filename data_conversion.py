@@ -85,8 +85,8 @@ class DataConversion:
 
                 # Save a randim cut from the middle
                 # random_seconds = random.randint(1, 4)
-                cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.5/2))
-                cut_end = int(cut_start + 43.1 * .5)
+                cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (1/2))
+                cut_end = int(cut_start + 43.1 * 1)
                 
                 # Set the random cut in the original mel-spectrogram to zero to create the input
                 mel_cut = copy.deepcopy(mel_spect)
