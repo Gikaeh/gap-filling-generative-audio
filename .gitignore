@@ -6,3 +6,5 @@ trainbatch3.pt
 trainbatch2.pt
 trainbatch1.pt
 test.pt
+*.wav
+model.pt

@@ -6,6 +6,7 @@ import torch
 import data_conversion_e as data_conversion, auraloss
 from torch.utils.data import random_split
 import soundfile as sf
+from tqdm import tqdm
 #print(WaveNet())
 #test1 = DataConversion('./dataset/*.mp3')
 #test1.load_data()
@@ -34,7 +35,7 @@ def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     model.train()
     avgloss = 0
-    for batch_num, batch in enumerate(dataloader):
+    for batch_num, batch in tqdm(enumerate(dataloader)):
         first, middle, end, first_mel, middle_mel, end_mel = [t.to(device) for t in batch]
         first, middle, end = torch.unsqueeze(first, 1), torch.unsqueeze(middle, 1), torch.unsqueeze(end, 1)
         # Compute prediction error
@@ -48,7 +49,7 @@ def train(dataloader, model, loss_fn, optimizer):
         if (batch_num + 1) % 20 == 0:
             loss, current = loss.item(), (batch_num + 1) * batch_size
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-    avgloss /= (batch_num + 1)
+    avgloss /= size
     print(f"average training loss: {avgloss:>7f}")
     return (x[0][0] for x in [first, middle, end, pred])
 
@@ -61,10 +62,10 @@ device = (
     if torch.backends.mps.is_available()
     else "cpu"
 )
-model = WaveNet(1, 512, data_conversion.n_mels, 512, 6, data_conversion.fill_in * data_conversion.global_sr)
+model = WaveNet(1, 32, data_conversion.n_mels, 32, 4, int(data_conversion.fill_in * data_conversion.global_sr))
 model = model.to(device)
 lr = 0.0002
-batch_size = 16
+batch_size = 8
 weight_decay = 0
 epochs = 10
 loss_fn = torch.nn.MSELoss()
