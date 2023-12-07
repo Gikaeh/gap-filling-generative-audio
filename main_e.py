@@ -2,8 +2,8 @@
 from model import WaveNet
 import random
 import numpy
-import torch
-import data_conversion_e as data_conversion, auraloss
+import torch, auraloss
+import data_conversion_e as data_conversion
 from torch.utils.data import random_split
 import soundfile as sf
 from tqdm import tqdm
@@ -31,7 +31,7 @@ from tqdm import tqdm
 #print(trainSet[0][0].shape)
 
 # Training loop (modified from https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html). 
-def train(dataloader, model, loss_fn, optimizer):
+def train(dataloader, model, loss_fn, optimizer, can_has = 1):
     size = len(dataloader.dataset)
     model.train()
     avgloss = 0
@@ -39,8 +39,9 @@ def train(dataloader, model, loss_fn, optimizer):
         first, middle, end, first_mel, middle_mel, end_mel = [t.to(device) for t in batch]
         first, middle, end = torch.unsqueeze(first, 1), torch.unsqueeze(middle, 1), torch.unsqueeze(end, 1)
         # Compute prediction error
-        pred = model(first, end, middle_mel)
-        loss = loss_fn(pred, middle)
+        pred = model(first * can_has, end * can_has, upscale_m(middle_mel))
+        loss = loss_fn(pred[:, :, :middle.shape[2]], middle)
+        #loss += auraloss_fn(pred[:, :, :middle.shape[2]], middle)
         # Backpropagation
         loss.backward()
         optimizer.step()
@@ -62,24 +63,29 @@ device = (
     if torch.backends.mps.is_available()
     else "cpu"
 )
-model = WaveNet(1, 32, data_conversion.n_mels, 32, 4, int(data_conversion.fill_in * data_conversion.global_sr))
+upscale_m = torch.nn.Upsample(size = data_conversion.global_sr * data_conversion.either_side, mode = 'nearest')
+model = WaveNet(1, 64, data_conversion.n_mels, 128, 4, int(data_conversion.either_side * data_conversion.global_sr))
 model = model.to(device)
-lr = 0.0002
-batch_size = 8
-weight_decay = 0
-epochs = 10
+#model.load_state_dict(torch.load("model.pt"))
+lr = 0.001
+batch_size = 4
+weight_decay = 0.1
+epochs = 30
 loss_fn = torch.nn.MSELoss()
+auraloss_fn = auraloss.freq.MelSTFTLoss(data_conversion.global_sr, device=device)
 optimizer = torch.optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
 # Get cpu, gpu or mps device for training (from https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html).
 
 print(model)
 
-for i in range(epochs):
+for i in range(20, 20+epochs):
     for data_batch in range(1, 5):
         train_dataloader = torch.utils.data.DataLoader(torch.load("trainbatch" + str(data_batch) + ".pt"), batch_size=batch_size, shuffle=True)
-        first, middle, end, pred = train(train_dataloader, model, loss_fn, optimizer)
+        first, middle, end, pred = train(train_dataloader, model, loss_fn, optimizer, epochs > 35)
+        print("epoch" + str(i) + "_" + str(data_batch))
         sf.write("epoch" + str(i) + "_" + str(data_batch) + "_first.wav", first.detach().cpu(), data_conversion.global_sr)
         sf.write("epoch" + str(i) + "_" + str(data_batch) + "_middle.wav", middle.detach().cpu(), data_conversion.global_sr)
         sf.write("epoch" + str(i) + "_" + str(data_batch) + "_end.wav", end.detach().cpu(), data_conversion.global_sr)
         sf.write("epoch" + str(i) + "_" + str(data_batch) + "_out.wav", pred.detach().cpu(), data_conversion.global_sr)
-torch.save(model.state_dict(), "model.pt")
+        sf.write("epoch" + str(i) + "_" + str(data_batch) + "_out10.wav", (pred * 10).detach().cpu(), data_conversion.global_sr)
+    torch.save(model.state_dict(), "model.pt")

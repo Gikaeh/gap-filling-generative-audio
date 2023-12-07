@@ -1,8 +1,6 @@
 import torch, data_conversion_e
 import torch.nn as nn
 
-upscale_m = torch.nn.Upsample(size = data_conversion_e.global_sr * data_conversion_e.either_side, mode = 'nearest')
-
 class WaveNetBlock(nn.Module):
     def __init__(self, in_channels, mel_spectrogram_length, out_channels, dilation):
         super(WaveNetBlock, self).__init__()
@@ -49,15 +47,14 @@ class WaveNet(nn.Module):
 
         # process skip connections
         self.end_conv1 = nn.Conv1d(skip_channels, skip_channels, kernel_size=1, padding = "same")
-        self.end_conv2 = nn.Conv1d(skip_channels, in_channels, kernel_size=1,  padding = "same")
+        self.end_conv2 = nn.Conv1d(skip_channels, 1, kernel_size=1,  padding = "same")
         self.output_length = output_length
 
     def forward(self, before, after, mel_spectrogram):
         # Initial convolution
         before = self.start_convLayer_before(before)
         after = self.start_convLayer_after(after)
-        mel_spectrogram = upscale_m(mel_spectrogram)
-
+        
         # Summing skip connections from all blocks
         skip_connections = 0
         for block in self.blocks:
