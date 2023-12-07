@@ -26,8 +26,8 @@ if __name__ == "__main__":
     raw_out_train, raw_out_val, raw_inp_train, raw_inp_val, mel_out_train, mel_out_val, mel_inp_train, mel_inp_val = train_test_split(
         raw_out_train_temp, raw_inp_train_temp, mel_inp_train_temp, mel_out_train_temp, test_size=0.25, random_state=42)
     # print(len(X_test), len(X_train), len(X_val), len(y_test), len(y_train), len(y_val))
-
-    model = model.WaveNet(1, 256, 128, 256, 4, raw_inp[0].shape[1]).to(device)
+    num_resid_channels = int(input("RC:"))
+    model = model.WaveNet(1, num_resid_channels, 128, 256, 4, raw_inp[0].shape[1]).to(device)
 
     # Define loss function and optimizer
     criterion = nn.MSELoss()
