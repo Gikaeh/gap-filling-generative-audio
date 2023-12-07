@@ -9,7 +9,7 @@ from librosa import display
 from tqdm import tqdm
 import random
 import copy
-# from pydub import AudioSegment
+from pydub import AudioSegment
 
 global_sr = 22050
 
@@ -27,8 +27,12 @@ class DataConversion:
 
         for x in tqdm(range(len(self.data))):
             yt, srt = lb.load(self.data[x], sr = global_sr)
+            # print(yt)
             assert srt == global_sr
-            self.y.append(yt)
+            normalized_audio = (yt - np.min(yt)) / (np.max(yt) - np.min(yt))
+            # print(normalized_audio)
+
+            self.y.append(normalized_audio)
 
     # def convert_mp3_to_wav(self):
     #     print('Converting from mp3 to wav')
@@ -84,7 +88,6 @@ class DataConversion:
                 self.mel_full.append(mel_spect)
 
                 # Save a randim cut from the middle
-                # random_seconds = random.randint(1, 4)
                 cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.25/2))
                 cut_end = int(cut_start + 43.1 * .25)
                 
@@ -108,7 +111,7 @@ class DataConversion:
         plt.show()
         
 if __name__ == "__main__":
-    test1 = DataConversion('./dataset/*.wav')
+    test1 = DataConversion('./dataset/1036800.low.mp3')
     # test1.convert_mp3_to_wav()
     test1.load_data()
     test1.data_to_mel()
@@ -116,5 +119,5 @@ if __name__ == "__main__":
     # spect_list = test1.data_to_stft()
     # test1.display_stft(spect_list, 20)
     # spect_list_cut, spect_list_full = test1.data_to_mel()
-    test1.display_mel('full', 20)
-    test1.display_mel('cut', 20)
+    test1.display_mel('full', 0)
+    test1.display_mel('cut', 0)

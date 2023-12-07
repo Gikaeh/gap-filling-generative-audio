@@ -1,4 +1,3 @@
-import os
 from data_conversion import DataConversion
 from model import SimpleCNN
 import vessl
@@ -8,13 +7,11 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
     vessl.init()
-    # script_dir = os.path.dirname(os.path.abspath(__file__))
-    # dataset_path = os.path.join(script_dir, '..', 'dataset', '*.wav')
+
     train_losses = []
     val_losses = []
     test_losses = []
@@ -22,12 +19,9 @@ if __name__ == "__main__":
     test1 = DataConversion('./dataset/*.mp3')
     test1.load_data()
     mel_spect_train, mel_spect_test = test1.data_to_mel()
-    # test1.display_mel('full', 20)
-    # test1.display_mel('cut', 20)
 
-    X_train_temp, X_test, y_train_temp, y_test = train_test_split(mel_spect_train, mel_spect_test, test_size=0.2, random_state=42)
-    X_train, X_val, y_train, y_val = train_test_split(X_train_temp, y_train_temp, test_size=0.25, random_state=42)
-    # print(len(X_test), len(X_train), len(X_val), len(y_test), len(y_train), len(y_val))
+    X_train, X_val, y_train, y_val = train_test_split(mel_spect_train, mel_spect_test, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
 
     model = SimpleCNN().to(device)
 
@@ -36,29 +30,22 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Convert the data to PyTorch DataLoader
-    scaler = MinMaxScaler(feature_range=(-1,1))
-    X_train = [scaler.fit_transform(spec) for spec in X_train]
     X_train = np.array(X_train, dtype=np.float32)
     X_train = torch.tensor(X_train, dtype=torch.float32).unsqueeze(1).to(device)
 
-    X_val = [scaler.transform(spec) for spec in X_val]
     X_val = np.array(X_val, dtype=np.float32)
     X_val = torch.tensor(X_val, dtype=torch.float32).unsqueeze(1).to(device)
 
-    X_test = [scaler.transform(spec) for spec in X_test]
     X_test = np.array(X_test, dtype=np.float32)
     X_test = torch.tensor(X_test, dtype=torch.float32).unsqueeze(1).to(device)
 
 
-    y_train = [scaler.fit_transform(spec) for spec in y_train]
     y_train = np.array(y_train, dtype=np.float32)
     y_train = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1).to(device)
 
-    y_val = [scaler.transform(spec) for spec in y_val]
     y_val = np.array(y_val, dtype=np.float32)
     y_val = torch.tensor(y_val, dtype=torch.float32).unsqueeze(1).to(device)
 
-    y_test = [scaler.transform(spec) for spec in y_test]
     y_test = np.array(y_test, dtype=np.float32)
     y_test = torch.tensor(y_test, dtype=torch.float32).unsqueeze(1).to(device)
 
@@ -120,20 +107,16 @@ if __name__ == "__main__":
 
         train_losses.append(avg_train_loss)
         val_losses.append(avg_val_loss)
-        test_losses.append(avg_test_loss)
-        print(f'Train Loss: {avg_train_loss}, Validation Loss: {avg_val_loss}, Test Loss: {avg_test_loss}')
-
-    # train_losses = [t.item() for t in train_losses]  # Convert train_losses to a list of float values
-    # val_losses = [t.item() for t in val_losses]      # Convert val_losses to a list of float values
-    # test_losses = [t.item() for t in test_losses]    # Convert test_losses to a list of float values
+        # test_losses.append(avg_test_loss)
+        print(f'Train Loss: {avg_train_loss}, Validation Loss: {avg_val_loss}')
 
     plt.figure(figsize=(10, 5))
     plt.plot(train_losses, label='Training Loss')
     plt.plot(val_losses, label='Validation Loss')
-    plt.plot(test_losses, label='Testing Loss')
+    # plt.plot(test_losses, label='Testing Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
     plt.show()
 
-    torch.save(model.state_dict(), 'output/CNN.pth')
+    torch.save(model.state_dict(), 'output/CNN4.pth')
