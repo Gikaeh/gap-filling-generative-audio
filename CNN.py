@@ -123,4 +123,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    torch.save(model.state_dict(), 'output/CNN4.pth')
+    torch.save(model.state_dict(), 'output/CNN.pth')
