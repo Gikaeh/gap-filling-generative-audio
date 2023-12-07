@@ -61,7 +61,7 @@ device = (
     if torch.backends.mps.is_available()
     else "cpu"
 )
-model = WaveNet(1, 16, data_conversion.n_mels, 16, 6, data_conversion.fill_in * data_conversion.global_sr)
+model = WaveNet(1, 512, data_conversion.n_mels, 512, 6, data_conversion.fill_in * data_conversion.global_sr)
 model = model.to(device)
 lr = 0.0002
 batch_size = 16

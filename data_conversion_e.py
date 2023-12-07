@@ -11,8 +11,8 @@ import torch
 
 hop = 128
 either_side = 10
-fill_in = 2
-move_between = 10
+fill_in = 0.5
+move_between = 9.75
 global_sr = 22050
 n_mels = 128
 
