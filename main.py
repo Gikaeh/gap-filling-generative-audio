@@ -1,80 +1,145 @@
-#from data_conversion import DataConversion
-from model import WaveNet
-import random
-import numpy
+import os
+from data_conversion import DataConversion
+from tqdm import tqdm
+import numpy as np
+import matplotlib.pyplot as plt
 import torch
-import data_conversion
-from torch.utils.data import random_split
+import model
+from torch import nn, optim
+from torch.utils.data import DataLoader, TensorDataset
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
 
-#print(WaveNet())
-#test1 = DataConversion('./dataset/*.mp3')
-#test1.load_data()
-#spect_list_mel = test1.data_to_mel()
-#inputs_before, inputs_after, outputs = test1.make_inputs_outputs(spect_list_mel)
-#print(inputs_before[0].shape)
-#print(inputs_after[0].shape)
-#print(outputs[0].shape)
-#test1.display_mel(spect_list_mel, 20)
+if __name__ == "__main__":
+    train_losses = []
+    val_losses = []
+    test_losses = []
+    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    test1 = DataConversion('./dataset/*.mp3')
+    test1.load_data()
+    raw_inp, raw_out, mel_inp, mel_out = test1.data_to_mel(True)
+    # test1.display_mel('full', 20)
+    # test1.display_mel('cut', 20)
 
-#trainSet = [inputs_before[:int(len(inputs_before) * 0.7)],
-#            inputs_after[:int(len(inputs_before) * 0.7)],
-#            outputs[:int(len(inputs_before) * 0.7)]]
-#testSet = [inputs_before[int(len(inputs_before) * 0.7):int(len(inputs_before) * 0.9)],
-#           inputs_after[int(len(inputs_before) * 0.7):int(len(inputs_before) * 0.9)],
-#            outputs[int(len(inputs_before) * 0.7):int(len(inputs_before) * 0.9)]]
-#valSet = [inputs_before[int(len(inputs_before) * 0.9):],
-#          inputs_after[int(len(inputs_before) * 0.9):],
-#            outputs[int(len(inputs_before) * 0.9):]]
+    raw_out_train_temp, raw_out_test, raw_inp_train_temp, raw_inp_test, mel_out_train_temp, mel_out_test, mel_inp_train_temp, mel_inp_test = train_test_split(
+        raw_out, raw_inp, mel_out, mel_inp, test_size=0.2, random_state=42)
+    raw_out_train, raw_out_val, raw_inp_train, raw_inp_val, mel_out_train, mel_out_val, mel_inp_train, mel_inp_val = train_test_split(
+        raw_out_train_temp, raw_inp_train_temp, mel_inp_train_temp, mel_out_train_temp, test_size=0.25, random_state=42)
+    # print(len(X_test), len(X_train), len(X_val), len(y_test), len(y_train), len(y_val))
 
-#print(len(trainSet), len(testSet), len(valSet))
-#print(trainSet[0][0].shape)
+    model = model.WaveNet(1, 512, 128, 512, 6, raw_inp[0].shape[1]).to(device)
 
-# Training loop (modified from https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html). 
-def train(dataloader, model, loss_fn, optimizer):
-    size = len(dataloader.dataset)
-    model.train()
-    avgloss = 0
-    for batch_num, batch in enumerate(dataloader):
-        first, middle, end, first_mel, middle_mel, end_mel = [t.to(device) for t in batch]
-        if batch_num == 0: print(first.shape)
-        first, middle, end = torch.unsqueeze(first, 1), torch.unsqueeze(middle, 1), torch.unsqueeze(end, 1)
-        if batch_num == 0: print(first.shape)
-        # Compute prediction error
-        pred = model(first, end, middle_mel)
-        loss = loss_fn(pred, middle)
+    # Define loss function and optimizer
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-        # Backpropagation
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-        avgloss += loss.item()
-        if (batch_num + 1) % 20 == 0:
-            loss, current = loss.item(), (batch_num + 1) * len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-    avgloss /= (batch + 1)
-    print(f"average training loss: {avgloss:>7f}")
+    # Convert the data to PyTorch DataLoader
+    scaler = MinMaxScaler(feature_range=(-1,1))
+    raw_out_train = [scaler.fit_transform(spec) for spec in raw_out_train]
+    raw_out_train = np.array(raw_out_train, dtype=np.float32)
+    raw_out_train = torch.tensor(raw_out_train, dtype=torch.float32).to(device)
 
+    raw_out_val = [scaler.transform(spec) for spec in raw_out_val]
+    raw_out_val = np.array(raw_out_val, dtype=np.float32)
+    raw_out_val = torch.tensor(raw_out_val, dtype=torch.float32).to(device)
 
-# These are obviously incorrect values, just having something so it compiles
-model = WaveNet(1, 32, 32, data_conversion.n_mels, 4, 4, data_conversion.fill_in * data_conversion.global_sr)
-lr = 0.001
-batch_size = 64
-weight_decay = 0
-epochs = 15
-loss_fn = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
-# Get cpu, gpu or mps device for training (from https://pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html).
-device = (
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps"
-    if torch.backends.mps.is_available()
-    else "cpu"
-)
-model = model.to(device)
-print(model)
+    raw_out_test = [scaler.transform(spec) for spec in raw_out_test]
+    raw_out_test = np.array(raw_out_test, dtype=np.float32)
+    raw_out_test = torch.tensor(raw_out_test, dtype=torch.float32).to(device)
 
-for i in range(epochs):
-    for data_batch in ["trainbatch1", "trainbatch2", "trainbatch3", "trainbatch4"]:
-        train_dataloader = torch.utils.data.DataLoader(torch.load(data_batch + ".pt"), batch_size=batch_size, shuffle=True)
-        train(train_dataloader, model, loss_fn, optimizer)
+    raw_inp_train = [scaler.fit_transform(spec) for spec in raw_inp_train]
+    raw_inp_train = np.array(raw_inp_train, dtype=np.float32)
+    raw_inp_train = torch.tensor(raw_inp_train, dtype=torch.float32).to(device)
+
+    raw_inp_val = [scaler.transform(spec) for spec in raw_inp_val]
+    raw_inp_val = np.array(raw_inp_val, dtype=np.float32)
+    raw_inp_val = torch.tensor(raw_inp_val, dtype=torch.float32).to(device)
+
+    raw_inp_test = [scaler.transform(spec) for spec in raw_inp_test]
+    raw_inp_test = np.array(raw_inp_test, dtype=np.float32)
+    raw_inp_test = torch.tensor(raw_inp_test, dtype=torch.float32).to(device)
+
+    mel_out_train = [scaler.fit_transform(spec) for spec in mel_out_train]
+    mel_out_train = np.array(mel_out_train, dtype=np.float32)
+    mel_out_train = torch.tensor(mel_out_train, dtype=torch.float32).unsqueeze(1).to(device)
+
+    mel_out_val = [scaler.transform(spec) for spec in mel_out_val]
+    mel_out_val = np.array(mel_out_val, dtype=np.float32)
+    mel_out_val = torch.tensor(mel_out_val, dtype=torch.float32).unsqueeze(1).to(device)
+
+    mel_out_test = [scaler.transform(spec) for spec in mel_out_test]
+    mel_out_test = np.array(mel_out_test, dtype=np.float32)
+    mel_out_test = torch.tensor(mel_out_test, dtype=torch.float32).unsqueeze(1).to(device)
+
+    mel_inp_train = [scaler.fit_transform(spec) for spec in mel_inp_train]
+    mel_inp_train = np.array(mel_inp_train, dtype=np.float32)
+    mel_inp_train = torch.tensor(mel_inp_train, dtype=torch.float32).unsqueeze(1).to(device)
+
+    mel_inp_val = [scaler.transform(spec) for spec in mel_inp_val]
+    mel_inp_val = np.array(mel_inp_val, dtype=np.float32)
+    mel_inp_val = torch.tensor(mel_inp_val, dtype=torch.float32).unsqueeze(1).to(device)
+
+    mel_inp_test = [scaler.transform(spec) for spec in mel_inp_test]
+    mel_inp_test = np.array(mel_inp_test, dtype=np.float32)
+    mel_inp_test = torch.tensor(mel_inp_test, dtype=torch.float32).unsqueeze(1).to(device)
+
+    train_dataset = TensorDataset(raw_inp_train, raw_out_train, mel_inp_train, mel_out_train)
+    val_dataset = TensorDataset(raw_inp_val, raw_out_val, mel_inp_val, mel_out_val)
+    test_dataset = TensorDataset(raw_inp_test, raw_out_test, mel_inp_test, mel_out_test)
+
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=16)
+    test_loader = DataLoader(test_dataset, batch_size=16)
+
+    num_epochs = 10
+    for epoch in range(num_epochs):
+        model.train()
+        print(f'Epoch {epoch+1}:')
+        train_loss = 0.0
+        for raw_inp, raw_out, mel_inp, mel_out in tqdm(train_loader, desc='Training: ', leave=False):
+            # Forward pass
+            outputs = model(raw_inp.to(device), mel_out.to(device))
+
+            # Compute the loss
+            loss = criterion(outputs, raw_out.to(device))
+
+            # Backward and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
+            
+
+        avg_train_loss = train_loss / len(train_loader)
+        print(epoch + 1, train_loss)
+        torch.save(model.state_dict(), 'output/WaveNet.pth')
+
+        # Validation loop
+        model.eval()
+        with torch.no_grad():
+            val_loss = 0.0
+            for raw_inp, raw_out, mel_inp, mel_out in tqdm(val_loader, desc='Validation: ', leave=False):
+                # Forward pass
+                outputs = model(raw_inp.to(device), mel_out.to(device))
+
+                # Compute the loss
+                loss = criterion(outputs, raw_out.to(device))
+                val_loss += loss.item()
+
+            avg_val_loss = val_loss / len(val_loader)
+        print(epoch + 1, val_loss)
+            
+        if False:
+            # Test loop
+            with torch.no_grad():
+                test_loss = 0.0
+                for raw_inp, raw_out, mel_inp, mel_out in tqdm(test_loader, desc='Testing: ', leave=False):
+                    # Forward pass
+                    outputs = model(raw_inp.to(device), mel_out.to(device))
+
+                    # Compute the loss
+                    loss = criterion(outputs, raw_out.to(device))
+                    test_loss += loss.item()
+
+                avg_test_loss = test_loss / len(test_loader)
+            print(epoch + 1, test_loss)
