@@ -20,7 +20,7 @@ if __name__ == "__main__":
     test1.load_data()
     mel_spect_train, mel_spect_test = test1.data_to_mel()
 
-    X_train, X_val, y_train, y_val = train_test_split(mel_spect_train, mel_spect_test, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(mel_spect_train, mel_spect_test, test_size=0.2, random_state=42)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
 
     model = SimpleCNN().to(device)
@@ -61,9 +61,8 @@ if __name__ == "__main__":
     num_epochs = 10
     for epoch in range(num_epochs):
         model.train()
-        print(f'Epoch {epoch+1}:')
         train_loss = 0.0
-        for partial_spectrogram, full_spectrogram in tqdm(train_loader, desc='Training: ', leave=False):
+        for partial_spectrogram, full_spectrogram in tqdm(train_loader, desc=f'Epoch {epoch + 1}/Training Encoder'):
             # Forward pass
             outputs = model(partial_spectrogram.to(device))
 
@@ -84,7 +83,7 @@ if __name__ == "__main__":
         model.eval()
         with torch.no_grad():
             val_loss = 0.0
-            for val_partial_spectrogram, val_full_spectrogram in tqdm(val_loader, desc='Validation: ', leave=False):
+            for val_partial_spectrogram, val_full_spectrogram in tqdm(val_loader, desc=f'Epoch {epoch + 1}/Validation Encoder'):
 
                 val_outputs = model(val_partial_spectrogram.to(device))
                 loss = criterion(val_outputs, val_full_spectrogram.to(device))
@@ -96,7 +95,7 @@ if __name__ == "__main__":
         # Test loop
         with torch.no_grad():
             test_loss = 0.0
-            for test_partial_spectrogram, test_full_spectrogram in tqdm(test_loader, desc='Testing: ', leave=False):
+            for test_partial_spectrogram, test_full_spectrogram in tqdm(test_loader, desc=f'Epoch {epoch + 1}/Testing Encoder'):
 
                 test_outputs = model(test_partial_spectrogram.to(device))
                 loss = criterion(test_outputs, test_full_spectrogram.to(device))
@@ -107,13 +106,18 @@ if __name__ == "__main__":
 
         train_losses.append(avg_train_loss)
         val_losses.append(avg_val_loss)
-        # test_losses.append(avg_test_loss)
-        print(f'Train Loss: {avg_train_loss}, Validation Loss: {avg_val_loss}')
+        test_losses.append(avg_test_loss)
+
+        print(f'Epoch {epoch + 1}:')
+        print(f'Training Encoder- Training Loss: {avg_train_loss}')
+        print(f'Validation Encoder- Validation Loss: {avg_val_loss}')
+        print(f'Testing Encoder - Testing Loss: {avg_test_loss}')
+
 
     plt.figure(figsize=(10, 5))
     plt.plot(train_losses, label='Training Loss')
     plt.plot(val_losses, label='Validation Loss')
-    # plt.plot(test_losses, label='Testing Loss')
+    plt.plot(test_losses, label='Testing Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
