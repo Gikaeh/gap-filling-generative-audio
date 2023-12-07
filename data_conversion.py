@@ -9,7 +9,6 @@ from librosa import display
 from tqdm import tqdm
 import random
 import copy
-from pydub import AudioSegment
 
 global_sr = 22050
 
@@ -21,6 +20,8 @@ class DataConversion:
         self.sr = []
         self.mel_full = []
         self.mel_cut = []
+        self.raw_full = []
+        self.raw_cut = []
 
     def load_data(self):
         print('Loading Data:')
@@ -29,18 +30,7 @@ class DataConversion:
             yt, srt = lb.load(self.data[x], sr = global_sr)
             # print(yt)
             assert srt == global_sr
-            normalized_audio = (yt - np.min(yt)) / (np.max(yt) - np.min(yt))
-            # print(normalized_audio)
-
-            self.y.append(normalized_audio)
-
-    # def convert_mp3_to_wav(self):
-    #     print('Converting from mp3 to wav')
-    #     for x in tqdm(range(len(self.data))):
-    #         file_name, file_extension = os.path.splitext(self.data[x])
-    #         wav_file = file_name + ".wav"
-    #         audio = AudioSegment.from_mp3(self.data[x])
-    #         audio.export(wav_file, format="wav")
+            self.y.append(yt)
 
     def display_data(self):
         for x in range(len(self.data)):
@@ -74,29 +64,35 @@ class DataConversion:
     #     ax.set_title(f'File {self.data[num]} Spectrogram', fontsize=20)
     #     plt.show()
 
-    def data_to_mel(self):
+    def data_to_mel(self, include_raw = False):
         print('Converting to Mel-Spectrogram:')
 
         for x in tqdm(range(len(self.data))):
-            for y in range(0,3):
-                # Extract a 20-second segment
-                start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
-                segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
+            # Extract a 20-second segment
+            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
+            segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
 
-                # Generate mel-spectrogram for the complete 20 seconds
-                mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
-                self.mel_full.append(mel_spect)
+            # Generate mel-spectrogram for the complete 20 seconds
+            mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
+            self.mel_full.append(mel_spect)
 
-                # Save a randim cut from the middle
-                cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.25/2))
-                cut_end = int(cut_start + 43.1 * .25)
-                
-                # Set the random cut in the original mel-spectrogram to zero to create the input
-                mel_cut = copy.deepcopy(mel_spect)
-                mel_cut[:, cut_start:cut_end] = 0
-                self.mel_cut.append(mel_cut)
+            # Save a 3-second cut from the middle
+            cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.25/2))
+            cut_end = int(cut_start + 43.1 * .25)
+            
+            # Set the 3 seconds in the original mel-spectrogram to zero to create the input
+            mel_cut = copy.deepcopy(mel_spect)
+            mel_cut[:, cut_start:cut_end] = 0
+            self.mel_cut.append(mel_cut)
+            if include_raw:
+                segment = np.expand_dims(segment, 0)
+                raw_cut = copy.deepcopy(segment)
+                raw_cut[:, int(cut_start * segment.shape[1]/mel_spect.shape[1]):int(cut_end * segment.shape[1]/mel_spect.shape[1])] = 0
+                self.raw_full.append(segment)
+                self.raw_cut.append(raw_cut)
 
-        return self.mel_cut, self.mel_full
+            if include_raw: return self.raw_cut, self.raw_full, self.mel_cut, self.mel_full
+            else: return self.mel_cut, self.mel_full
 
     def display_mel(self, mel_list, num):
         if mel_list == 'full':
@@ -119,5 +115,5 @@ if __name__ == "__main__":
     # spect_list = test1.data_to_stft()
     # test1.display_stft(spect_list, 20)
     # spect_list_cut, spect_list_full = test1.data_to_mel()
-    test1.display_mel('full', 0)
-    test1.display_mel('cut', 0)
+    # test1.display_mel('full', 20)
+    # test1.display_mel('cut', 20)

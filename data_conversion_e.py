@@ -11,8 +11,8 @@ import torch
 
 hop = 128
 either_side = 10
-fill_in = 2
-move_between = 10
+fill_in = 0.5
+move_between = 9.75
 global_sr = 22050
 n_mels = 128
 
@@ -86,10 +86,10 @@ class DataConversion:
                                  (0.9, 1.0, "test")]:
             data = []
             for x in tqdm(range(int(start * size), int(end * size))):
-                for i in range((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * move_between)):
-                    first = self.y[x][i * move_between * global_sr : (i * move_between + either_side) * global_sr]
-                    middle = self.y[x][(i * move_between + either_side) * global_sr : (i * move_between + either_side + fill_in) * global_sr]
-                    end = self.y[x][(i * move_between + either_side + fill_in) * global_sr : (i * move_between + either_side * 2 + fill_in) * global_sr]
+                for i in range(int((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * move_between))):
+                    first = self.y[x][int(i * move_between * global_sr) : int((i * move_between + either_side) * global_sr)]
+                    middle = self.y[x][int((i * move_between + either_side) * global_sr) : int((i * move_between + either_side + fill_in) * global_sr)]
+                    end = self.y[x][int((i * move_between + either_side + fill_in) * global_sr) : int((i * move_between + either_side * 2 + fill_in) * global_sr)]
                     first_mel = lb.amplitude_to_db(lb.feature.melspectrogram(y=first, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max)
                     middle_mel = lb.amplitude_to_db(lb.feature.melspectrogram(y=middle, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max)
                     end_mel = lb.amplitude_to_db(lb.feature.melspectrogram(y=end, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max)
