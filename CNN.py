@@ -1,5 +1,5 @@
 from data_conversion import DataConversion
-from model import SimpleCNN
+from model import SimpleEncoder
 import vessl
 from tqdm import tqdm
 import numpy as np
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(mel_spect_train, mel_spect_test, test_size=0.2, random_state=42)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=42)
 
-    model = SimpleCNN().to(device)
+    model = SimpleEncoder().to(device)
 
     # Define loss function and optimizer
     criterion = nn.MSELoss()

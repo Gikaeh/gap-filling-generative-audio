@@ -70,9 +70,9 @@ class WaveNet(nn.Module):
         #x = (2 * x) / torch.max(x) - 1
         return x
 
-class SimpleCNN(nn.Module):
+class SimpleEncoder(nn.Module):
     def __init__(self):
-        super(SimpleCNN, self).__init__()
+        super(SimpleEncoder, self).__init__()
         # Encoder
         self.encoder = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=3, padding=1),

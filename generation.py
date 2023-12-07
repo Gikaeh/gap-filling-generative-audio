@@ -1,4 +1,4 @@
-from model import SimpleCNN
+from model import SimpleEncoder
 from data_conversion import DataConversion
 import data_conversion
 import torch
@@ -13,7 +13,7 @@ test1.load_data()
 mel_spect_train, mel_spect_test = test1.data_to_mel( )
 
 # Load the saved model for generation
-loaded_model = SimpleCNN()
+loaded_model = SimpleEncoder()
 loaded_model.load_state_dict(torch.load('output/CNN2.pth'))
 loaded_model
 loaded_model.eval()
