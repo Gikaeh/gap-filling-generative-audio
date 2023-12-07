@@ -1,9 +1,11 @@
 from model import SimpleCNN
 from data_conversion import DataConversion
+import data_conversion
 import torch
 import numpy as np
 import librosa
 import matplotlib.pyplot as plt
+import soundfile
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -50,3 +52,8 @@ librosa.display.specshow(librosa.power_to_db(new_complete_spec_np, ref=np.max), 
 plt.title('Generated Mel Spectrogram')
 plt.colorbar(format='%+2.0f dB')
 plt.show()
+
+# Convert the file back and save it
+audio = librosa.feature.inverse.mel_to_audio(new_complete_spec_np, sr=data_conversion.global_sr)
+print(audio.shape)
+soundfile.write("output/genaudio.wav",audio, samplerate=data_conversion.global_sr)
