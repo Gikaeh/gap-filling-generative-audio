@@ -61,27 +61,27 @@ if __name__ == "__main__":
 
     mel_out_train = [scaler.fit_transform(spec) for spec in mel_out_train]
     mel_out_train = np.array(mel_out_train, dtype=np.float32)
-    mel_out_train = torch.tensor(mel_out_train, dtype=torch.float32).unsqueeze(1).to(device)
+    mel_out_train = torch.tensor(mel_out_train, dtype=torch.float32).to(device)
 
     mel_out_val = [scaler.transform(spec) for spec in mel_out_val]
     mel_out_val = np.array(mel_out_val, dtype=np.float32)
-    mel_out_val = torch.tensor(mel_out_val, dtype=torch.float32).unsqueeze(1).to(device)
+    mel_out_val = torch.tensor(mel_out_val, dtype=torch.float32).to(device)
 
     mel_out_test = [scaler.transform(spec) for spec in mel_out_test]
     mel_out_test = np.array(mel_out_test, dtype=np.float32)
-    mel_out_test = torch.tensor(mel_out_test, dtype=torch.float32).unsqueeze(1).to(device)
+    mel_out_test = torch.tensor(mel_out_test, dtype=torch.float32).to(device)
 
     mel_inp_train = [scaler.fit_transform(spec) for spec in mel_inp_train]
     mel_inp_train = np.array(mel_inp_train, dtype=np.float32)
-    mel_inp_train = torch.tensor(mel_inp_train, dtype=torch.float32).unsqueeze(1).to(device)
+    mel_inp_train = torch.tensor(mel_inp_train, dtype=torch.float32).to(device)
 
     mel_inp_val = [scaler.transform(spec) for spec in mel_inp_val]
     mel_inp_val = np.array(mel_inp_val, dtype=np.float32)
-    mel_inp_val = torch.tensor(mel_inp_val, dtype=torch.float32).unsqueeze(1).to(device)
+    mel_inp_val = torch.tensor(mel_inp_val, dtype=torch.float32).to(device)
 
     mel_inp_test = [scaler.transform(spec) for spec in mel_inp_test]
     mel_inp_test = np.array(mel_inp_test, dtype=np.float32)
-    mel_inp_test = torch.tensor(mel_inp_test, dtype=torch.float32).unsqueeze(1).to(device)
+    mel_inp_test = torch.tensor(mel_inp_test, dtype=torch.float32).to(device)
 
     train_dataset = TensorDataset(raw_inp_train, raw_out_train, mel_inp_train, mel_out_train)
     val_dataset = TensorDataset(raw_inp_val, raw_out_val, mel_inp_val, mel_out_val)
