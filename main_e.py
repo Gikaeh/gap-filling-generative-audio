@@ -66,11 +66,11 @@ device = (
 upscale_m = torch.nn.Upsample(size = data_conversion.global_sr * data_conversion.either_side, mode = 'nearest')
 model = WaveNet(1, 64, data_conversion.n_mels, 128, 4, int(data_conversion.either_side * data_conversion.global_sr))
 model = model.to(device)
-#model.load_state_dict(torch.load("model.pt"))
-lr = 0.001
-batch_size = 4
-weight_decay = 0.1
-epochs = 30
+model.load_state_dict(torch.load("model.pt", map_location=torch.device(device)))
+lr = 0.0002
+batch_size = 2
+weight_decay = 0
+epochs = 10
 loss_fn = torch.nn.MSELoss()
 auraloss_fn = auraloss.freq.MelSTFTLoss(data_conversion.global_sr, device=device)
 optimizer = torch.optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -78,10 +78,10 @@ optimizer = torch.optim.Adagrad(model.parameters(), lr=lr, weight_decay=weight_d
 
 print(model)
 
-for i in range(20, 20+epochs):
+for i in range(epochs):
     for data_batch in range(1, 5):
         train_dataloader = torch.utils.data.DataLoader(torch.load("trainbatch" + str(data_batch) + ".pt"), batch_size=batch_size, shuffle=True)
-        first, middle, end, pred = train(train_dataloader, model, loss_fn, optimizer, epochs > 35)
+        first, middle, end, pred = train(train_dataloader, model, loss_fn, optimizer, epochs > 5)
         print("epoch" + str(i) + "_" + str(data_batch))
         sf.write("epoch" + str(i) + "_" + str(data_batch) + "_first.wav", first.detach().cpu(), data_conversion.global_sr)
         sf.write("epoch" + str(i) + "_" + str(data_batch) + "_middle.wav", middle.detach().cpu(), data_conversion.global_sr)

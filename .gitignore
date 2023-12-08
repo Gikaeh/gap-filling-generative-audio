@@ -1,10 +1,6 @@
 
 *.pyc
-validation.pt
-trainbatch4.pt
-trainbatch3.pt
-trainbatch2.pt
-trainbatch1.pt
-test.pt
+*.pt
 *.wav
-model.pt
+.DS_Store
+*.asd
