@@ -30,8 +30,7 @@ class WaveNetBlock(nn.Module):
         # Return the sum of the input and residual for the next block,
         # and the skip connection for aggregation in the main WaveNet model
         return residual_before + before, residual_after + after, skip
-            #residual_before + before[:, :, :-residual_before.shape[2]], residual_after + after[:, :, :-residual_after.shape[2]], skip
-
+    
 class WaveNet(nn.Module):
     def __init__(self, in_channels, residual_channels, mel_spectrogram_length, skip_channels, num_blocks, output_length):
         super(WaveNet, self).__init__()
@@ -67,7 +66,6 @@ class WaveNet(nn.Module):
         # Two final convolutional layers
         x = torch.relu(self.end_conv1(x))
         x = self.end_conv2(x)[:,:,:self.output_length]
-        #x = (2 * x) / torch.max(x) - 1
         return x
 
 class SimpleCNN(nn.Module):
