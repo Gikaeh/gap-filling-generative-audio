@@ -1,4 +1,4 @@
-from model import SimpleEncoder
+from model import SimpleCNN
 from data_conversion import DataConversion
 import data_conversion
 import torch
@@ -21,8 +21,8 @@ test1.load_data()
 mel_spect_train, mel_spect_test = test1.data_to_mel( )
 
 # Load the saved model for generation
-loaded_model = SimpleEncoder()
-loaded_model.load_state_dict(torch.load('output/CNN2.pth'))
+loaded_model = SimpleCNN()
+loaded_model.load_state_dict(torch.load('output/CNN.pth'))
 loaded_model = loaded_model.to(device)
 loaded_model.eval()
 
@@ -53,4 +53,4 @@ plt.show()
 
 # Convert the file back and save it
 audio = librosa.feature.inverse.mel_to_audio(new_complete_spec_np, sr=data_conversion.global_sr)
-soundfile.write("output/genaudio2-1-griffinlim.wav",audio, samplerate=data_conversion.global_sr)
+soundfile.write("output/genaudio-griffinlim.wav",audio, samplerate=data_conversion.global_sr)

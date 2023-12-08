@@ -34,7 +34,6 @@ class DataConversion:
 
         for x in tqdm(range(len(self.data))):
             yt, srt = lb.load(self.data[x], sr = global_sr)
-            # print(yt)
             assert srt == global_sr
             self.y.append(yt)
 
@@ -74,31 +73,32 @@ class DataConversion:
         print('Converting to Mel-Spectrogram:')
 
         for x in tqdm(range(len(self.data))):
+            for y in range(3):
             # Extract a 20-second segment
-            start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
-            segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
+                start_time = np.random.uniform(0, max(0, len(self.y[x]) - 20 * global_sr))
+                segment = self.y[x][int(start_time):int(start_time) + 20 * global_sr]
 
-            # Generate mel-spectrogram for the complete 20 seconds
-            mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
-            self.mel_full.append(mel_spect)
+                # Generate mel-spectrogram for the complete 20 seconds
+                mel_spect = lb.feature.melspectrogram(y=segment, sr=global_sr)
+                self.mel_full.append(mel_spect)
 
-            # Save a 3-second cut from the middle
-            cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.25/2))
-            cut_end = int(cut_start + 43.1 * .25)
-            
-            # Set the 3 seconds in the original mel-spectrogram to zero to create the input
-            mel_cut = copy.deepcopy(mel_spect)
-            mel_cut[:, cut_start:cut_end] = 0
-            self.mel_cut.append(mel_cut)
-            if include_raw:
-                segment = np.expand_dims(segment, 0)
-                raw_cut = copy.deepcopy(segment)
-                raw_cut[:, int(cut_start * segment.shape[1]/mel_spect.shape[1]):int(cut_end * segment.shape[1]/mel_spect.shape[1])] = 0
-                self.raw_full.append(segment)
-                self.raw_cut.append(raw_cut)
+                # Save a 3-second cut from the middle
+                cut_start = int((mel_spect.shape[1] / 2) - 43.1 * (.25/2))
+                cut_end = int(cut_start + 43.1 * .25)
+                
+                # Set the 3 seconds in the original mel-spectrogram to zero to create the input
+                mel_cut = copy.deepcopy(mel_spect)
+                mel_cut[:, cut_start:cut_end] = 0
+                self.mel_cut.append(mel_cut)
+                if include_raw:
+                    segment = np.expand_dims(segment, 0)
+                    raw_cut = copy.deepcopy(segment)
+                    raw_cut[:, int(cut_start * segment.shape[1]/mel_spect.shape[1]):int(cut_end * segment.shape[1]/mel_spect.shape[1])] = 0
+                    self.raw_full.append(segment)
+                    self.raw_cut.append(raw_cut)
 
-            if include_raw: return self.raw_cut, self.raw_full, self.mel_cut, self.mel_full
-            else: return self.mel_cut, self.mel_full
+        if include_raw: return self.raw_cut, self.raw_full, self.mel_cut, self.mel_full
+        else: return self.mel_cut, self.mel_full
 
     def display_mel(self, mel_list, num):
         if mel_list == 'full':
