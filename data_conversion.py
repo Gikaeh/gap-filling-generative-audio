@@ -8,9 +8,15 @@ import librosa as lb
 from librosa import display
 from tqdm import tqdm
 import random
+import torch
 import copy
 
+hop = 128
+either_side = 10
+fill_in = 0.5
+move_between = 9.75
 global_sr = 22050
+n_mels = 128
 
 class DataConversion:
     def __init__(self, file_dir):
@@ -105,12 +111,35 @@ class DataConversion:
         plt.title(f'File {self.data[num]} Mel-Spectrogram')
         plt.colorbar(format='%+2.0f dB')
         plt.show()
+
+    def process_and_save_data(self):
+        size = len(self.y)
+        for start, end, name in [(0, 0.2, "trainbatch1"),
+                                 (0.2, 0.4, "trainbatch2"),
+                                 (0.4, 0.6, "trainbatch3"),
+                                 (0.6, 0.8, "trainbatch4"),
+                                 (0.8, 0.9, "validation"),
+                                 (0.9, 1.0, "test")]:
+            data = []
+            for x in tqdm(range(int(start * size), int(end * size))):
+                for i in range(int((len(self.y[x]) - (either_side * 2 - fill_in) * global_sr)//(global_sr * move_between))):
+                    first = self.y[x][int(i * move_between * global_sr) : int((i * move_between + either_side) * global_sr)]
+                    middle = self.y[x][int((i * move_between + either_side) * global_sr) : int((i * move_between + either_side + fill_in) * global_sr)]
+                    end = self.y[x][int((i * move_between + either_side + fill_in) * global_sr) : int((i * move_between + either_side * 2 + fill_in) * global_sr)]
+                    first_mel = lb.amplitude_to_db(lb.feature.melspectrogram(y=first, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max)
+                    middle_mel = lb.amplitude_to_db(lb.feature.melspectrogram(y=middle, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max)
+                    end_mel = lb.amplitude_to_db(lb.feature.melspectrogram(y=end, sr=global_sr, n_mels=n_mels, hop_length = hop), ref = np.max)
+                    data.append([first, middle, end, first_mel, middle_mel, end_mel])
+            print(len(data))
+            torch.save(data[:int(0.1 * len(data))], "dataset/" + name + ".pt")
         
 if __name__ == "__main__":
-    test1 = DataConversion('./dataset/1036800.low.mp3')
-    # test1.convert_mp3_to_wav()
+    test1 = DataConversion('./dataset/*.mp3')
     test1.load_data()
-    test1.data_to_mel()
+    test1.display_raw_audio(20)
+    test1.process_and_save_data()
+    # test1.convert_mp3_to_wav()
+    # test1.data_to_mel()
     # test1.display_raw_audio(20)
     # spect_list = test1.data_to_stft()
     # test1.display_stft(spect_list, 20)

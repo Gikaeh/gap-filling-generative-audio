@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 import soundfile
 from sklearn.preprocessing import MinMaxScaler
 
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
+
 test1 = DataConversion('./dataset/1036800.low.mp3')
 test1.load_data()
 mel_spect_train, mel_spect_test = test1.data_to_mel( )
@@ -15,7 +23,7 @@ mel_spect_train, mel_spect_test = test1.data_to_mel( )
 # Load the saved model for generation
 loaded_model = SimpleEncoder()
 loaded_model.load_state_dict(torch.load('output/CNN2.pth'))
-loaded_model
+loaded_model = loaded_model.to(device)
 loaded_model.eval()
 
 orig_incomplete_spec = mel_spect_train[0]
@@ -45,4 +53,4 @@ plt.show()
 
 # Convert the file back and save it
 audio = librosa.feature.inverse.mel_to_audio(new_complete_spec_np, sr=data_conversion.global_sr)
-soundfile.write("output/genaudio2-1.wav",audio, samplerate=data_conversion.global_sr)
+soundfile.write("output/genaudio2-1-griffinlim.wav",audio, samplerate=data_conversion.global_sr)
